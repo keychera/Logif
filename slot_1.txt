@@ -1,0 +1,8 @@
+[[oxygen,storage],[oxygen,life_support],[sample,sample_room],[extinguisher,lab_A],[flashlight,in_hand]].
+[[manual,bedroom_A],[knife,kitchen],[report,lab_B],[test,cockpit]].
+91.
+hall_C.
+hall_C.
+no.
+[[player,100],[alien,30]].
+[2].
