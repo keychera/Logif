@@ -794,7 +794,7 @@ finish :-
 	items(Item),
 	write('Total steps taken : '), write(Step), nl,
 	write('Total items taken : '), write(Item), nl,
-	write('Please enter the "quit." command.'),
+	write('Please enter the "quit." command.'), nl,
 	check_quest,
 	position(Ls),
 	rember(Ls, [player, _], Xs),
@@ -838,6 +838,7 @@ instructions :-
         write('load(1 or 2).            -- to load save data from slot 1 / 2.'), nl,
         write('talk(NPC).               -- to talk with NPC.'), nl,
         write('stat.                    -- to view your current status.'), nl,
+        write('bag.                     -- to view what items you are holding now.'), nl,
         write('look.                    -- to look around you again.'), nl,
         write('instructions.            -- to see this message again.'), nl,
         write('quit.                    -- to end the game and quit.'), nl,
@@ -872,6 +873,20 @@ resume :-
 	loop.
 
 
+/* These rules used to show your inventory */
+write_item(L) :-
+	isMember([Item, in_hand], L),
+	rember(L, [Item, in_hand], Ls),
+	write(Item), nl, write_item(Ls).
+write_item(_).
+
+bag :-
+	write('Your inventory :'), nl, fail.
+bag :-
+	at(L),
+	write_item(L).
+
+
 /* These rules control command */
 run(X) :-
 	\+(X = quit),
@@ -894,6 +909,7 @@ run(look) :- look, !.
 run(rescue) :- rescue, !.
 run(repair) :- repair, !.
 run(wait) :- wait, !.
+run(bag) :- bag, !.
 run(n) :- n, !.
 run(s) :- s, !.
 run(w) :- w, !.
