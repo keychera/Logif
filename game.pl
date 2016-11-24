@@ -157,7 +157,11 @@ init_new :-
 	/* This facts describe how much HP the player and alien has */
 	assertz(hp([[player, 100], [alien, 30]])),
 	/* This facts describe which script hasn't been played */
-	assertz(script([1,2])).
+	assertz(script([1,2])),
+	/* This facts tells how many steps you have taken */
+	assertz(steps(0)),
+	/* This facts tells how many items you have taken */
+	assertz(items(0)).
 
 
 /* These rules describe how to save a file */
@@ -170,6 +174,8 @@ saving(Stream) :-
 	dark(F),
 	hp(G),
 	script(H),
+	steps(I),
+	items(J),
 	write(Stream,A), write(Stream,'.'), nl(Stream),
 	write(Stream,B), write(Stream,'.'), nl(Stream),
 	write(Stream,C), write(Stream,'.'), nl(Stream),
@@ -178,6 +184,8 @@ saving(Stream) :-
 	write(Stream,F), write(Stream,'.'), nl(Stream),
 	write(Stream,G), write(Stream,'.'), nl(Stream),
 	write(Stream,H), write(Stream,'.'), nl(Stream),
+	write(Stream,I), write(Stream,'.'), nl(Stream),
+	write(Stream,J), write(Stream,'.'), nl(Stream),
 	close(Stream).
 
 save(1) :-
@@ -209,6 +217,10 @@ loading(Stream) :-
 	assertz(hp(G)),
 	read(Stream,H),
 	assertz(script(H)),
+	read(Stream,I),
+	assertz(steps(I)),
+	read(Stream,J),
+	assertz(items(J)),
 	close(Stream).
 
 load(1) :-
@@ -306,6 +318,9 @@ take(X) :-
 	append(Y,[X, in_hand],A),
 	retract(at(L)),
 	assertz(at(A)),
+	retract(items(M)),
+	N is M + 1,
+	assertz(items(N)),
         write('You took '),
 	write(X),
         nl, nl.
@@ -324,6 +339,9 @@ drop(X) :-
 	append(Y,[X, Place],A),
 	retract(at(L)),
 	assertz(at(A)),
+	retract(items(M)),
+	N is M - 1,
+	assertz(items(N)),
         write('You dropped '),
 	write(X),
         nl.
@@ -423,6 +441,9 @@ go(Direction) :-
 	attacked,
         retract(i_am_at(Here)),
         assertz(i_am_at(There)),
+	retract(steps(M)),
+	N is M + 1,
+	assertz(steps(N)),
 	next_turn,
         look, !.
 
@@ -451,12 +472,14 @@ suffocate(X) :-
 
 suffocate(_).
 
-weak(X) :-
+weak :-
+	hp(L),
+	isMember([player, X], L),
 	X =< 0,
 	write('You died'), nl, nl,
 	die, !.
 
-weak(_).
+weak.
 
 
 /* This rule tells how to look around you. */
@@ -504,14 +527,16 @@ attack(alien) :-
 	damaged(player, 10),
 	write('You attacked the alien with your knife, alien''s HP -20'), nl,
 	write('The alien retaliate, your HP -10'), nl,
-	check(alien), !.
+	check(alien),
+	weak, !.
 attack(alien) :-
 	i_am_at(Place),
 	alien_at(Place),
 	damaged(player, 10),
 	write('You attacked the alien, but the alien is too fast'), nl,
 	write('The alien retaliate, your HP -10'), nl,
-	check(alien), !.
+	check(alien),
+	weak, !.
 attack(_) :-
 	write('I don''t see it here'), nl, nl.
 
@@ -537,7 +562,12 @@ die :-
 
 finish :-
         nl,
-        write('The game is over. Please enter the "quit." command.'),
+        write('The game is over.'), nl,
+	steps(Step),
+	items(Item),
+	write('Total steps taken : '), write(Step), nl,
+	write('Total items taken : '), write(Item), nl,
+	write('Please enter the "quit." command.'),
 	retract(i_am_at(_)),
 	assertz(i_am_at(death)),
         nl, nl.
