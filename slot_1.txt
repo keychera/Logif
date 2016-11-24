@@ -1,11 +1,11 @@
-date(2016,11,24,11,53,34.895911216,-25200,-,-).
-[[oxygen,storage],[oxygen,life_support],[sample,sample_room],[extinguisher,lab_A],[flashlight,in_hand]].
-[[manual,bedroom_A],[knife,kitchen],[report,lab_B],[test,cockpit]].
-88.
-[[fire,hall_D],[alien,engine_A],[player,engine_A]].
+date(2016,11,24,17,49,41.515809774,-25200,-,-).
+[[oxygen,storage],[oxygen,life_support],[sample,sample_room],[equalizer,lab_A],[core,engine_A],[flashlight,in_hand],[manual,in_hand]].
+[[knife,kitchen],[antimatter,lab_B],[chip,cockpit]].
+79.
+[[alien,cooling_system],[player,hall_B]].
 no.
 [[player,100],[alien,30]].
 [2].
-12.
-1.
-[[engine_B, core], [engine_A, equalizer], [system_room, antimatter], [cockpit, chip]].
+9.
+2.
+[[engine_B,chip],[engine_A,equalizer],[system_room,core],[cockpit,antimatter]].

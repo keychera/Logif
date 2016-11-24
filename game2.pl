@@ -144,12 +144,12 @@ init_new :-
 	clear_data,
 	/* These facts tell where the various objects in the game
 	   are located. */
-	assertz(at([[oxygen,storage], [oxygen,life_support], [sample,sample_room], [flashlight,closet] ,[extinguisher,lab_A]])),
-	assertz(hidden([[manual,bedroom_A], [knife,kitchen], [report,lab_B], [test,cockpit]])),
+	assertz(at([[oxygen,storage], [oxygen,life_support], [sample,sample_room], [flashlight,closet], [equalizer,lab_A], [core, engine_A]])),
+	assertz(hidden([[manual,bedroom_A], [knife,kitchen], [antimatter, lab_B], [chip, cockpit]])),
 	/* This fact describes your initial oxygen level */
 	assertz(oxygen_level(100)),
 	/* This fact states initial position of every NPC */
-	assertz(position([[player, bedroom_A], [alien, fuel_tank], [fire, hall_D]])),
+	assertz(position([[player, bedroom_A], [alien, fuel_tank]])),
 	/* This facts states that the spaceship is initially dark */
 	assertz(dark(yes)),
 	/* This facts describe how much HP the player and alien has */
@@ -480,21 +480,50 @@ use(knife) :-
 	retract(at(L)),
 	assertz(at(Y)),
 	write('You put the knife in your bag'), nl, nl, !.
+use(manual) :-
+	at(X),
+	isMember([manual, in_hand], X),
+	dark(yes),
+	write('Remember what your mom said'), nl,
+	write('''Reading a book in complete darkness is bad for your eyes'''), nl, nl.
+use(manual) :-
+	at(X),
+	isMember([manual, in_hand], X),
+	write('MANUAL : HOW TO REPAIR THE SPACESHIP'), nl,
+	broken(L),
+	write_manual(L), nl.
+use(capsule) :-
+	broken([]),
+	write('You have finished the game'), nl,
+	finish.
 use(X) :-
 	parts(A),
 	isMember(X,A),
 	at(B),
 	isMember([X, in_hand], B),
 	position(C),
+	broken(Z),
 	isMember([player, Location], C),
+	isMember([Location, _], Z),
 	atom_concat('in_',Location,New),
 	rember(B, [X, in_hand], D),
 	append(D, [X, New], L),
 	retract(at(B)),
 	assertz(at(L)),
 	write(X),
-	write(' used in '),
-	write(Location),
+	write(' is installed in this room'), nl,
+	write('Use ''repair.'' to repair this part.'), nl,
+	nl, nl, !.
+use(X) :-
+	parts(A),
+	isMember(X,A),
+	at(B),
+	isMember([X, in_hand], B),
+	position(C),
+	broken(Z),
+	isMember([player, Location], C),
+	\+(isMember([Location, _], Z)),
+	write('This room doesn''t need any reparation!'),
 	nl, nl, !.
 
 use(X) :-
@@ -506,8 +535,69 @@ use(_) :-
 	write('You aren''t holding it!'), nl, nl.
 
 
-/* These rules describe how to repair a machine */
+write_manual([]).
+write_manual([A|L]) :-
+	A = [engine_A, Part],
+	write(Part), write(' is used to repair engine room A'), nl,
+	write_manual(L). 
+write_manual([A|L]) :-
+	A = [engine_B, Part],
+	write(Part), write(' is used to repair engine room B'), nl,
+	write_manual(L). 
+write_manual([A|L]) :-
+	A = [system_room, Part],
+	write(Part), write(' is used to repair system room'), nl,
+	write_manual(L). 
+write_manual([A|L]) :-
+	A = [cockpit, Part],
+	write(Part), write(' is used to repair cockpit'), nl,
+	write_manual(L). 
 
+
+/* These rules describe how to repair a machine */
+repair :- 
+	position(P),
+	at(L),
+	broken(B),
+	isMember([player, Location], P),
+	isMember([Location, Part], B),
+	isMember([Part, New], L),
+	atom_concat('in_',Location,New),
+	rember(B, [Location, Part], C),
+	retract(broken(B)),
+	assertz(broken(C)),
+	rember(L, [Part, New], X),
+	retract(at(L)),
+	assertz(at(X)),
+	write('You repaired a part of the ship'), nl, nl, !.
+repair :- 
+	position(P),
+	at(L),
+	broken(B),
+	isMember([player, Location], P),
+	isMember([Location, Somepart], B),
+	atom_concat('in_',Location, New),
+	isMember([Part, New], L),
+	isMember([Somewhere, Part], B),
+	\+(Somewhere = Location),
+	\+(Somepart = Part),
+	rember(L, [Part, New], X),
+	append(X, [Part, in_hand], Y),
+	retract(at(L)),
+	assertz(at(Y)),
+	hp(H),
+	isMember([player, M], H),
+	N is M - 15,
+	rember(H, [player, M], Haha),
+	append(Haha, [player, N], HP),
+	retract(hp(H)),
+	assertz(hp(HP)),
+	write('OUCH!! Because you repair this room with the wrong part, it explodes'), nl,
+	write(Part), write(' is returned to your hand'), nl,
+	write('Your HP -15'), weak, nl, nl, !.
+repair :- 
+	write('No part installed.'), nl,
+	write('Please insert the corresponding part using ''use(Part)'''), nl, nl.
 
 
 /* These rules describe your conversation with the NPC */
@@ -550,7 +640,8 @@ attacked :-
 	isMember([player, Place], Ls),
 	isMember([alien, Place], Ls),
 	damaged(player, 10),
-	write('Something attacked you. Your HP -10'), nl, nl, fail.
+	write('Something attacked you. Your HP -10'),
+	weak, nl, nl, fail.
 attacked :-
 	dark(no),
 	position(Ls),
@@ -558,7 +649,8 @@ attacked :-
 	isMember([alien, Place], Ls),
 	damaged(player, 5),
 	write('The moment you move, the alien flies towards you'), nl,
-	write('The alien slashed you, your HP -5'), nl, nl, fail.
+	write('The alien slashed you, your HP -5'), 
+	weak, nl, nl, fail.
 attacked.
 	
 go(Direction) :-
@@ -575,7 +667,9 @@ go(Direction) :-
 	assertz(steps(N)),
 	next_turn,
         look, !.
-
+go(_) :-
+	dark(yes),
+        write('OUCH!! Looks like there''s a wall here.'), nl, nl.
 go(_) :-
         write('You can''t go that way.'), nl, nl.
 
@@ -655,9 +749,7 @@ attack(alien) :-
 	isMember([player, Place], Ls),
 	isMember([alien, Place], Ls),
 	damaged(alien, 20),
-	damaged(player, 10),
 	write('You attacked the alien with your knife, alien''s HP -20'), nl,
-	write('The alien retaliate, your HP -10'), nl,
 	check(alien),
 	weak, !.
 attack(alien) :-
@@ -693,22 +785,37 @@ check(_) :-
 
 /* This rule tells how to die. */
 die :-
+        write('The game is over.'), nl,
         finish.
 
 finish :-
         nl,
-        write('The game is over.'), nl,
 	steps(Step),
 	items(Item),
 	write('Total steps taken : '), write(Step), nl,
 	write('Total items taken : '), write(Item), nl,
 	write('Please enter the "quit." command.'),
+	check_quest,
 	position(Ls),
 	rember(Ls, [player, _], Xs),
 	append(Xs, [player, death], A),
 	retract(position(Ls)),
 	assertz(position(A)),
         nl, nl.
+
+check_quest :-
+	check_main.
+
+check_main :-
+	broken([]),
+	oxygen_level(X),
+	X > 0,
+	hp(L),
+	isMember([player, HP], L),
+	HP > 0,
+	write('MAIN QUEST FINISHED'), nl, !.
+check_main :-
+	write('MAIN QUEST NOT FINISHED').
 
 
 /* This rule will terminate the program and quit */
@@ -848,7 +955,12 @@ describe(air_lock) :-
         write('To the south is escape capsule.'), nl.
 
 describe(capsule) :-
+	\+(broken([])),
         write('You are inside the escape capsule. The exit is to the north.'), nl.
+describe(capsule) :-
+        write('You are inside the escape capsule. It looks like the capsule is repaired'), nl,
+	write('and functional. Use ''use(capsule)'' to go back to earth.'), nl,
+	write('The exit is to the north.'), nl.
 
 describe(hall_B) :-
         write('You are in Hall B. To the north is the dining room. To the south is'), nl,
@@ -989,3 +1101,21 @@ random_assign([A|L1],Lb,L) :-
 	rember(Lb, Part, L2),
 	append(Ls,[A, Part],L),
 	random_assign(L1,L2,Ls).
+
+
+/* Cheat code, use in secret */
+iamhealthyagain :-
+	retract(hp(_)),
+	assertz(hp(100)),
+	write('CHEAT CODE ACTIVATED'), nl, nl.
+castmagicdeaththorn :-
+	position(P),
+	rember(P, [alien, _], X),
+	append(X, [alien, death], Y),
+	assertz(position(P)),
+	assertz(position(Y)),
+	write('CHEAT CODE ACTIVATED'), nl, nl.
+theshipismagicallyrepaired :-
+	retract(broken(_)),
+	assertz(broken([])),
+	write('CHEAT CODE ACTIVATED'), nl, nl.
