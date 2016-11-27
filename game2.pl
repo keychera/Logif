@@ -70,7 +70,7 @@ path(hall_C,n,hall_B).
 path(hall_C,s,closet).
 path(hall_C,w,lab_A).
 path(hall_C,e,bedroom_B).
-path(hall_C,d,hall_D).
+path(hall_B,d,hall_D).
 
 path(closet,n,hall_C).
 
@@ -82,7 +82,7 @@ path(lab_A,n,lab_B).
 path(lab_B,s,lab_A).
 
 /* First floor path */
-path(hall_D,u,hall_C).
+path(hall_D,u,hall_B).
 path(hall_D,n,life_support).
 path(hall_D,s,fuel_tank).
 path(hall_D,w,freezer).
@@ -358,7 +358,10 @@ turn :- steps(X),
 	write(X), nl,
 	turn(L),
 	write('turn : '),
-	write(L), nl, nl.
+	write(L), nl, nl,
+	scene(M),
+	write('turn : '),
+	write(M), nl, nl.
 	
 /* These rules describe how to investigate a place */
 investigate :-
@@ -628,6 +631,45 @@ repair :-
 	write('No part installed.'), nl,
 	write('Please insert the corresponding part using ''use(Part)'''), nl, nl.
 
+/*these rules organize scenes*/
+update_scene :-
+	turn(Z),
+	Z > 15,
+	isMember([fuel_tank,antimatter],broken),
+	scene(_),
+	retract(scene(_)),
+	assertz(scene(9)),
+	weak, !.
+	
+update_scene :-
+	turn(Z),
+	Z =< 15,
+	at(Inventory),
+	isMember([antimatter,in_hand],Inventory),
+	retract(scene(1)),
+	assertz(scene(2)),
+	position(Location),
+	isMember([player,hall_D],Location),
+	retract(ruby(0)),
+	assertz(ruby(1)),
+	notify,!.
+	
+update_scene :-
+	turn(Z),
+	Z > 45,
+	broken(L),
+	length(L,N),
+	N > 3,
+	scene(_),
+	retract(scene(_)),
+	assertz(scene(9)),
+	weak, !.
+	
+update_scene :-
+	turn(Z),
+	Z > 45,
+	write('the story progression is not updated yet'),nl,!.
+	
 
 /* These rules describe your conversation with the NPC */
 talk(alien) :-
@@ -644,15 +686,16 @@ talk(id4d414b4f) :- guy(0),
 	
 talk(ruby) :- ruby(1),scene(1),
 	write('[AUTHORIZED SIGNAL - RUBY] [ONE WAY LIVE MESSAGE]'), nl,
-	write('hey do you hear me? I believe you hear me right. so listen and pay attention.'), nl,
-	write('We''re in some sort of emergency measure.'), nl,
-	write('I need you to do some*bzzt* to fix things up.'), nl,
-	write('the signal is holding up and I can''t tell you much for now.'), nl,
-	write('the first objective is to *bzzt* to lab B '),nl,
-	write('and take the antimatter from there and get back to the place you are now.'), nl,
-	write('request signal from me using communicator if you are done.'),nl,
-	write('use your flashlight to look around.'), nl,
-	write('and one final note. don''t contact any*bzzt*"'), nl,
+	write('\t hey do you hear me? I believe you hear me right. so listen and pay attention.'), nl,
+	write('\t We''re in some sort of emergency measure.'), nl,
+	write('\t I need you to do some*bzzt* to fix things up.'), nl,
+	write('\t the signal is holding up and I can''t tell you much for now.'), nl,
+	write('\t the first objective is to *bzzt* to Lab B '),nl,
+	write('\t Lab B is upstair, go there via Lab A the west of hall C'),nl,
+	write('\t and take the antimatter from there and get back to the place you are now.'), nl,
+	write('\t request signal from me using communicator if you are done.'),nl,
+	write('\t use your flashlight to look around.'), nl,
+	write('\t and one final note. don''t contact any*bzzt*"'), nl,
 	retract(ruby(1)), assertz(ruby(0)),
 	retract(guy(0)), assertz(guy(1)),nl,
 	
@@ -660,15 +703,85 @@ talk(ruby) :- ruby(1),scene(1),
 	write('it says that it is an unauthorized signal'), nl,
 	write('the signal has an id of '' id4d414b4f '''), nl,!.
 
+
 talk(id4d414b4f) :-  guy(1),scene(1),
 	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
-	write('follow this instruction precisely. '), nl,
-	write('go upstair. go south. '), nl,
-	write('go west. go north.  '), nl,
-	write('take antimatter. go back. '), nl,
-	write(' turn off flashlight. '), nl,
+	write('\t follow this instruction precisely. '), nl,
+	write('\t you are in Hall D. '), nl,
+	write('\t go upstair. go south. '), nl,
+	write('\t go west. go north.  '), nl,
+	write('\t take antimatter. go back to Hall D. '), nl,
+	write('\t turn off flashlight. '), nl,
+	retract(guy(1)), assertz(guy(0)),!.	
+	
+talk(ruby) :- ruby(1),scene(2),
+	write('[AUTHORIZED SIGNAL - RUBY] [ONE WAY LIVE MESSAGE]'), nl,
+	write('\t good! now go south to the fuel tank'),nl,
+	write('\t and fix the malfunctioning energy source by replacing it with antimatter.'), nl,
+	write('\t after that, go to Lab A upstair to retrieve nitrogen,'), nl,
+	write('\t and to kitchen to take an equalizer from there.'), nl,
+	write('\t return to your original place after that.'), nl,
+	write('\t then proceed to west and fix the freezer using nitrogen and'),nl,
+	write('\t go north to fix cooling system using stabilizer.'),nl,
+	write('\t return and request signal from me"'), nl,
+	write('\t *bzzt*"'), nl,
+	write('\t *bzzt* security system that there is unknown *bzzt* lurking around. *bzzt*"'), nl,
+	write('\t be careful'), nl,
+	retract(ruby(1)), assertz(ruby(0)),!.
+	
+talk(id4d414b4f) :-  guy(1),scene(2),
+	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
+	write('\t go south. fix fuel tank. '), nl,
+	write('\t go upstair. go east. '), nl,
+	write('\t take core A. go west. '), nl,
+	write('\t go all the way south. '), nl,
+	write('\t take core B. go back to hall D. '), nl,
+	write('\t go east. fix engine A.  '), nl,
+	write('\t go north. fix engine B.'), nl,
+	write('\t go back to hall D. turn off flashlight.'), nl,
+	retract(guy(1)), assertz(guy(0)),!.	
+	
+talk(ruby) :- ruby(1),scene(3),
+	write('[AUTHORIZED SIGNAL - RUBY] [ONE WAY LIVE MESSAGE]'), nl,
+	write('\t it seems that the floor you are in will be really dangerous.'),nl,
+	write('\t go upstair and don''t *bzzt* go down again. after that, search for chip.'), nl,
+	write('\t I will rely on you for this because I don''t have much info on where it is'), nl,
+	write('\t since the ship scanner is recently broken.'), nl,
+	write('\t the chip is on floor you are now and'), nl,
+	write('\t most likely in the room you haven''t come across yet.'),nl,
+	write('\t  good luck, I''m counting on you! '),nl,
+	write('\t go back and request signal if you found them'), nl,
+	write('\t *bzzt*"'), nl,
+	write('\t *bzzt* security system that there is unknown *bzzt* lurking around. *bzzt*"'), nl,
+	write('\t be careful'), nl,
+	retract(ruby(1)), assertz(ruby(0)),!.
+	
+talk(id4d414b4f) :-  guy(1),scene(3),
+	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
+	write('\t go upstair. never go downstair. search for chip. '), nl,
+	write('\t my scanner says that it''s located around north side of the ship. '), nl,
+	write('\t go back to Hall B afterwards. '), nl,
+	write('\t use flashlight but carefully '), nl,
 	retract(guy(1)), assertz(guy(0)),!.
 	
+talk(ruby) :- ruby(1),scene(4),
+	write('[AUTHORIZED SIGNAL - RUBY] [ONE WAY LIVE MESSAGE]'), nl,
+	write('\t the sig"bzzt" can''t hold up really long now so I''ll tell you this quick. '),nl,
+	write('\t main objective: sample *cough* from sample room. '), nl,
+	write('\t go upstair, go east and fix system room'), nl,
+	write('\t then go north to sample room "bzzt" then '), nl,
+	write('\t go back to h *cough* hall where you can go downstair but go south instead.'), nl,
+	write('\t all the way south. there is an escape capsule ready.'),nl,
+	write('\t please b..bring that sample back to earth. that is our only ho ................."'),nl,
+	retract(ruby(1)), assertz(ruby(0)),!.
+	
+talk(id4d414b4f) :-  guy(1),scene(4),
+	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
+	write('\t please save Ruby... '), nl,
+	write('\t leave the sample, go north to the cockpit '), nl,
+	write('\t and take her with you to the escape capsule"bzzt" '), nl,
+	retract(guy(1)), assertz(guy(0)),!.
+
 talk(X) :-
 	write(X),
 	write(' there isn''t any entity named that to talk to'), nl, nl, !.
@@ -738,13 +851,18 @@ go(_) :-
 /* This rule describe what change per turn */
 next_turn :-
 	oxygen_level(X),
+	turn(W),
 	Y is X - 1,
+	Z is W + 1,
 	suffocate(Y),
+	update_scene,
 	retract(oxygen_level(X)),
 	assertz(oxygen_level(Y)),
+	retract(turn(W)),
+	assertz(turn(Z)),
 	alien_move.		/* Alien has a chance to move everytime player move */
 	
-
+	
 /* These rules tells when you should die */
 suffocate(X) :-
 	X =< 0,
@@ -914,12 +1032,13 @@ instructions :-
 /* This rules start a new game. secret is a cheat code for debugging*/
 start :-
 	init_new,
-	check_script,
 	instructions,
 	stat,
-	look,
-	write('you feel obligated to respond Ruby'), nl,
-	write('respond Ruby by typing talk(ruby).'), nl,
+	write('press Enter to start the game'), nl, get_single_char(_),
+	check_script,
+	write('It''s so dark here, you don''t really know where you are'),nl,
+	write('you feel obligated to respond Ruby.'), nl,
+	write('respond Ruby by typing ''talk(ruby).'' .'), nl,
 	loop.
 
 loop :-
@@ -987,14 +1106,14 @@ run(_) :- write('Wrong command'), nl, nl.
 /* These rules describe narration */
 check_script :-
 	script(L),
-	isMember(1,L),
+	isMember(1,L),nl,nl,
+	write('...'), nl,nl,
 	write('you felt dizzy.'), nl,
 	write('you have just woken up from a strange slumber. the room you were in is pitch black. '), nl,
 	write('you remembered holding a communicator and you do holding one. '), nl,
 	write('A signal from it spewing out dim lights from the device impatiently waiting to be responded.'), nl,
-	write('the screen says Ruby.'), nl,
+	write('the signal id is '' ruby '''), nl,
 	nl,
-	write('press Enter to Continue'), nl, get_single_char(_),
 	rember(L,1,Ls),
 	retract(script(L)),
 	assertz(script(Ls)), fail.
@@ -1040,12 +1159,11 @@ describe(capsule) :-
 
 describe(hall_B) :-
         write('You are in Hall B. To the north is the dining room. To the south is'), nl,
-        write('Hall C. To the east is Bedroom A. There is a stairs that lead upstairs.'), nl.
+        write('Hall C. To the east is Bedroom A. There is a stairs that lead upstairs and downstairs'), nl.
 
 describe(hall_C) :-
         write('You are in Hall C. To the north is Hall B. To the south is the closet.'), nl,
-        write('To the east is Bedroom B. To the west is Laboratory A. '), nl,
-	write('There is a stairs that lead downstairs.'), nl.
+        write('To the east is Bedroom B. To the west is Laboratory A. '), nl.
 		
 describe(dining) :-
         write('You are inside the dining room. To the south is Hall B.'), nl,
