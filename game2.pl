@@ -2,9 +2,9 @@
 
 /* SURVIVE IN SPACESHIP -- by :
 	13515052 - Kevin Jonathan Koswara
-	13515 - Kevin Erdiza
-	13515 - Lazuardi Firdaus
-	13515 - Yano */
+	13515016 - Kevin Erdiza Yogatama
+	13515136 - Lazuardi Firdaus
+	13515100 - Aulia Icshan Rifkyano */
 
 /* Needed by SWI-Prolog. */
 :- dynamic(at/1).
@@ -102,7 +102,6 @@ path(cooling_system,s,freezer).
 
 path(fuel_tank,n,hall_D).
 
-
 /* These rules save and load game data */
 /* This rules delete all existing data */
 clear_data :-
@@ -137,6 +136,21 @@ clear_data :-
 	broken(_),
 	retract(broken(_)), fail.
 
+clear_data :-
+	ruby(_),
+	retract(ruby(_)), fail.
+
+clear_data :-
+	guy(_),
+	retract(guy(_)), fail.
+
+clear_data :-
+	scene(_),
+	retract(scene(_)), fail.
+
+clear_data :-
+	turn(_),
+	retract(turn(_)), fail.
 clear_data.
 
 /* This rule load initial data for new game */
@@ -144,12 +158,12 @@ init_new :-
 	clear_data,
 	/* These facts tell where the various objects in the game
 	   are located. */
-	assertz(at([[oxygen,storage], [oxygen,life_support], [sample,sample_room], [flashlight,closet], [equalizer,lab_A], [core, engine_A]])),
+	assertz(at([[flashlight,in_hand],[communicator,in_hand],[oxygen,storage], [oxygen,life_support], [sample,sample_room], [antimatter,lab_B],[nitrogen,lab_A], [coreA, bedroom_B], [coreB, closet], [knife, bedroom_A], [equalizer,kitchen],[chip,bathroom]])),
 	assertz(hidden([[manual,bedroom_A], [knife,kitchen], [antimatter, lab_B], [chip, cockpit]])),
 	/* This fact describes your initial oxygen level */
 	assertz(oxygen_level(100)),
 	/* This fact states initial position of every NPC */
-	assertz(position([[player, bedroom_A], [alien, fuel_tank]])),
+	assertz(position([[player, hall_D], [alien, bathroom], [ruby, cockpit]])),
 	/* This facts states that the spaceship is initially dark */
 	assertz(dark(yes)),
 	/* This facts describe how much HP the player and alien has */
@@ -157,14 +171,21 @@ init_new :-
 	/* This facts describe which script hasn't been played */
 	assertz(script([1,2])),
 	/* This facts tells how many steps you have taken */
-	assertz(steps(0)),
+	assertz(steps(0)),assertz(turn(1)),
 	/* This facts tells how many items you have taken */
-	assertz(items(0)),
+	assertz(items(2)),
+	/* This facts describe the scene of the game story progression*/
+	assertz(scene(1)),
+	/* This facts describe whether ruby is available to contact*/
+	assertz(ruby(1)),
+	/* This facts describe whether that other guy is available to contact*/
+	assertz(guy(0)),
 	/* This facts describe what part of ship need which part */
-	machine(A),
+	assertz(broken([[system_room,chip],[fuel_tank,antimatter],[engine_A,coreA],[engine_B,coreB],[freezer,nitrogen],[cooling_system,equalizer]])).
+	/*machine(A),
 	parts(B),
 	random_assign(A,B,C),
-	assertz(broken(C)).
+	assertz(broken(C)).*/
 
 
 /* These rules describe how to save a file */
@@ -330,7 +351,15 @@ stat :- oxygen_level(X),
 	isMember([player, N], L),
 	write('Health Point : '),
 	write(N), nl, nl.
-
+	
+/*for debugging*/
+turn :- steps(X),
+	write('steps : '),
+	write(X), nl,
+	turn(L),
+	write('turn : '),
+	write(L), nl, nl.
+	
 /* These rules describe how to investigate a place */
 investigate :-
 	position(Ls),
@@ -606,10 +635,43 @@ talk(alien) :-
 	isMember([player, Place], Ls),
 	isMember([alien, Place], Ls),
 	write('HOOOMAAAANNNNN!!!'), nl, nl, !.
+	
+talk(ruby) :- ruby(0),
+	write('[REQUEST SIGNAL DENIED]'), nl,!.
+	
+talk(id4d414b4f) :- guy(0),
+	write('[REQUEST SIGNAL DENIED]'), nl,!.
+	
+talk(ruby) :- ruby(1),scene(1),
+	write('[AUTHORIZED SIGNAL - RUBY] [ONE WAY LIVE MESSAGE]'), nl,
+	write('hey do you hear me? I believe you hear me right. so listen and pay attention.'), nl,
+	write('We''re in some sort of emergency measure.'), nl,
+	write('I need you to do some*bzzt* to fix things up.'), nl,
+	write('the signal is holding up and I can''t tell you much for now.'), nl,
+	write('the first objective is to *bzzt* to lab B '),nl,
+	write('and take the antimatter from there and get back to the place you are now.'), nl,
+	write('request signal from me using communicator if you are done.'),nl,
+	write('use your flashlight to look around.'), nl,
+	write('and one final note. don''t contact any*bzzt*"'), nl,
+	retract(ruby(1)), assertz(ruby(0)),
+	retract(guy(0)), assertz(guy(1)),nl,
+	
+	write('now your communicator is flashing red light'), nl,
+	write('it says that it is an unauthorized signal'), nl,
+	write('the signal has an id of '' id4d414b4f '''), nl,!.
 
+talk(id4d414b4f) :-  guy(1),scene(1),
+	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
+	write('follow this instruction precisely. '), nl,
+	write('go upstair. go south. '), nl,
+	write('go west. go north.  '), nl,
+	write('take antimatter. go back. '), nl,
+	write(' turn off flashlight. '), nl,
+	retract(guy(1)), assertz(guy(0)),!.
+	
 talk(X) :-
 	write(X),
-	write(' is not here! are you talking with a ghost?'), nl, nl, !.
+	write(' there isn''t any entity named that to talk to'), nl, nl, !.
 
 
 /* This rules describe how you skip turn */
@@ -819,7 +881,7 @@ check_main :-
 
 
 /* This rule will terminate the program and quit */
-quit :- halt.
+quit :- break.
 
 
 /* This rule just writes out game instructions. */
@@ -853,9 +915,11 @@ instructions :-
 start :-
 	init_new,
 	check_script,
-        instructions,
+	instructions,
 	stat,
-        look,
+	look,
+	write('you feel obligated to respond Ruby'), nl,
+	write('respond Ruby by typing talk(ruby).'), nl,
 	loop.
 
 loop :-
@@ -892,7 +956,7 @@ run(X) :-
 	\+(X = quit),
 	position(Ls),
 	isMember([player, death], Ls),
-	write('Grim Reaper	: YOU ARE DEAD, YOU CAN''T DO ANYTHING!'), nl, nl, !.
+	write('Grim Reaper\t: YOU ARE DEAD, YOU CAN''T DO ANYTHING!'), nl, nl, !.
 run(take(X)) :- take(X), !.
 run(drop(X)) :- drop(X), !.
 run(use(X)) :- use(X), !.
@@ -901,6 +965,7 @@ run(load(X)) :- load(X), !.
 run(talk(X)) :- talk(X), !.
 run(attack(X)) :- attack(X), !.
 run(stat) :- stat, !.
+run(turn) :- turn, !. 
 run(start) :- start, !.
 run(instructions) :- instructions, !.
 run(investigate) :- investigate, !.
@@ -923,18 +988,13 @@ run(_) :- write('Wrong command'), nl, nl.
 check_script :-
 	script(L),
 	isMember(1,L),
-	write('Our expedition to an unidentified planet L-091F has just finished.'), nl,
-	write('We are currently on our way back to earth. It''s been 2 years - 741'), nl,
-	write('days to be exact - since I left the earth. Me and my crew are having'), nl,
-	write('a party to celebrate our homecoming. We are 2 weeks away from earth,'), nl,
-	write('everything is going smoothly. No abnormalities in the ship at all'), nl,
+	write('you felt dizzy.'), nl,
+	write('you have just woken up from a strange slumber. the room you were in is pitch black. '), nl,
+	write('you remembered holding a communicator and you do holding one. '), nl,
+	write('A signal from it spewing out dim lights from the device impatiently waiting to be responded.'), nl,
+	write('the screen says Ruby.'), nl,
 	nl,
-	write('Three days later, an unidentified flying object is approaching the ship'), nl,
-	write('really fast. It''s too late to avoid impact. The ship collide with that'), nl,
-	write('object and shakes very violently. I can barely keep standing when'), nl,
-	write('something hit my head really hard. After that, everything went black.'), nl,
-	nl,
-	write('Press ENTER to continue'), nl, get_single_char(_),
+	write('press Enter to Continue'), nl, get_single_char(_),
 	rember(L,1,Ls),
 	retract(script(L)),
 	assertz(script(Ls)), fail.
@@ -1105,10 +1165,10 @@ sense_alien.
 
 /* Main Objective */
 /* These fact define which room need reparation and parts available*/
-machine([cockpit, system_room, engine_A, engine_B]).
-parts([core, chip, antimatter, equalizer]).
-
-/* These rules assign random parts for a machine */
+machine([fuel_tank, system_room, engine_A, engine_B, freezer,cooling_system]).
+parts([antimatter, chip, coreA, coreB, nitrogen, equalizer]).
+ 
+/* These rules assign random parts for a machine 
 random_assign([],[],[]).
 random_assign([A|L1],Lb,L) :-
 	length(Lb, Length),
@@ -1116,7 +1176,7 @@ random_assign([A|L1],Lb,L) :-
 	nth_elmt(Lb, Index, Part),
 	rember(Lb, Part, L2),
 	append(Ls,[A, Part],L),
-	random_assign(L1,L2,Ls).
+	random_assign(L1,L2,Ls).*/
 
 
 /* Cheat code, use in secret */
