@@ -15,6 +15,14 @@
 :- dynamic(script/1).
 :- dynamic(hp/1).
 :- dynamic(broken/1).
+:- dynamic(ruby/1).
+:- dynamic(guy/1).
+:- dynamic(scene/1).
+:- dynamic(turn/1).
+:- dynamic(items/1).
+/*new since kevjo edit*/
+:- dynamic(locked/1).
+:- dynamic(corrupted/1).
 
 /* These rules control list */
 rember([],_,[]).
@@ -149,8 +157,22 @@ clear_data :-
 	retract(scene(_)), fail.
 
 clear_data :-
+	items(_),
+	retract(items(_)), fail.
+
+clear_data :-
 	turn(_),
 	retract(turn(_)), fail.
+clear_data.
+
+clear_data :-
+	locked(_),
+	retract(locked(_)), fail.
+clear_data.
+
+clear_data :-
+	corrupted(_),
+	retract(corrupted(_)), fail.
 clear_data.
 
 /* This rule load initial data for new game */
@@ -158,8 +180,8 @@ init_new :-
 	clear_data,
 	/* These facts tell where the various objects in the game
 	   are located. */
-	assertz(at([[flashlight,in_hand],[communicator,in_hand],[oxygen,storage], [oxygen,life_support], [sample,sample_room], [antimatter,lab_B],[nitrogen,lab_A], [coreA, bedroom_B], [coreB, closet], [knife, bedroom_A], [equalizer,kitchen],[chip,bathroom]])),
-	assertz(hidden([[manual,bedroom_A], [knife,kitchen], [antimatter, lab_B], [chip, cockpit]])),
+	assertz(at([[flashlight,in_hand],[communicator,in_hand],[oxygen,storage], [oxygen,life_support], [sample,sample_room], [antimatter,lab_B],[nitrogen,lab_A], [coreA, bedroom_B], [coreB, closet], [equalizer,kitchen],[chip,bathroom]])),
+	assertz(hidden([[knife,bedroom_A]])),
 	/* This fact describes your initial oxygen level */
 	assertz(oxygen_level(100)),
 	/* This fact states initial position of every NPC */
@@ -169,9 +191,9 @@ init_new :-
 	/* This facts describe how much HP the player and alien has */
 	assertz(hp([[player, 100], [alien, 30]])),
 	/* This facts describe which script hasn't been played */
-	assertz(script([1,2])),
+	assertz(script([1,2,3,4])),
 	/* This facts tells how many steps you have taken */
-	assertz(steps(0)),assertz(turn(1)),
+	assertz(turn(1)),
 	/* This facts tells how many items you have taken */
 	assertz(items(2)),
 	/* This facts describe the scene of the game story progression*/
@@ -181,7 +203,11 @@ init_new :-
 	/* This facts describe whether that other guy is available to contact*/
 	assertz(guy(0)),
 	/* This facts describe what part of ship need which part */
-	assertz(broken([[system_room,chip],[fuel_tank,antimatter],[engine_A,coreA],[engine_B,coreB],[freezer,nitrogen],[cooling_system,equalizer]])).
+	assertz(broken([[system_room,chip],[fuel_tank,antimatter],[engine_A,coreA],[engine_B,coreB],[freezer,nitrogen],[cooling_system,equalizer]])),
+	/* This facts describe which room is locked initially*/
+	assertz(locked([cockpit,capsule])),
+	/* This facts describe which room is locked initially*/
+	assertz(corrupted(0)).
 	/*machine(A),
 	parts(B),
 	random_assign(A,B,C),
@@ -199,9 +225,12 @@ saving(Stream) :-
 	dark(F),
 	hp(G),
 	script(H),
-	steps(I),
+	turn(I),
 	items(J),
 	broken(K),
+	scene(L),
+	ruby(M),
+	guy(N),
 	write(Stream,A), write(Stream,'.'), nl(Stream),
 	write(Stream,B), write(Stream,'.'), nl(Stream),
 	write(Stream,C), write(Stream,'.'), nl(Stream),
@@ -213,6 +242,9 @@ saving(Stream) :-
 	write(Stream,I), write(Stream,'.'), nl(Stream),
 	write(Stream,J), write(Stream,'.'), nl(Stream),
 	write(Stream,K), write(Stream,'.'), nl(Stream),
+	write(Stream,L), write(Stream,'.'), nl(Stream),
+	write(Stream,M), write(Stream,'.'), nl(Stream),
+	write(Stream,N), write(Stream,'.'), nl(Stream),
 	close(Stream).
 
 save(1) :-
@@ -262,11 +294,17 @@ loading(Stream) :-
 	read(Stream,H),
 	assertz(script(H)),
 	read(Stream,I),
-	assertz(steps(I)),
+	assertz(turn(I)),
 	read(Stream,J),
 	assertz(items(J)),
 	read(Stream,K),
 	assertz(broken(K)),
+	read(Stream,L),
+	assertz(scene(L)),
+	read(Stream,M),
+	assertz(ruby(M)),
+	read(Stream,N),
+	assertz(guy(N)),
 	close(Stream).
 
 load(1) :-
@@ -353,18 +391,16 @@ stat :- oxygen_level(X),
 	write(N), nl, nl.
 	
 /*for debugging*/
-turn :- steps(X),
-	write('steps : '),
-	write(X), nl,
+showturn :- 
 	turn(L),
 	write('turn : '),
 	write(L), nl, nl,
 	scene(M),
-	write('turn : '),
+	write('scene : '),
 	write(M), nl, nl.
 	
 /* These rules describe how to investigate a place */
-investigate :-
+reveal :-
 	position(Ls),
 	isMember([player, Place], Ls),
 	hidden(L),
@@ -376,9 +412,11 @@ investigate :-
 	append(Z,[X, Place],A),
 	retract(at(Z)),
 	assertz(at(A)),
-	fail.
+	reveal, fail.
+reveal.
 
 investigate :-
+	reveal,
 	dark(yes),
 	write('You have finished investigating '), nl,
 	write('You used 4 oxygen level while investigating'), nl,
@@ -401,6 +439,7 @@ investigate :-
 	sense_alien.
 
 investigate :-
+	reveal,
 	position(Ls),
 	isMember([player, Place], Ls),
 	write('You have finished investigating '), nl,
@@ -631,45 +670,170 @@ repair :-
 	write('No part installed.'), nl,
 	write('Please insert the corresponding part using ''use(Part)'''), nl, nl.
 
+/*this facts list which room is on floor 1, specialized for update_scene*/
+floor1([[player,cooling_system],[player,freezer],[player,life_support],[player,hall_D],[player,engine_A],[player,engine_B],[player,fuel_tank]]).
+
 /*these rules organize scenes*/
 update_scene :-
 	turn(Z),
-	Z > 15,
-	isMember([fuel_tank,antimatter],broken),
+	Z > 50,
+	floor1(DangerousLocation),
+	position(Location),
+	isMember(X,DangerousLocation),
+	isMember(X,Location),
 	scene(_),
 	retract(scene(_)),
-	assertz(scene(9)),
+	assertz(scene(98)),
+	weak. /*don't put them ! here
+	
+the code below is originally used to unlock capsule when
+system room is repaired, but somehow it acts like it cuts as if we use a '!'
+
+update_scene :-
+	broken(B),
+	\+isMember([system_room,_],B),
+	locked(L),
+	rember(L,capsule,M),
+	retract(locked(L)),
+	assertz(locked(M)). don't put them ! here*/
+	
+update_scene :-
+	scene(1),
+	turn(Z),
+	Z > 15,
+	broken(X),
+	isMember([fuel_tank,antimatter],X),
+	retract(scene(1)),
+	assertz(scene(99)),
 	weak, !.
 	
 update_scene :-
+	scene(1),
 	turn(Z),
 	Z =< 15,
 	at(Inventory),
-	isMember([antimatter,in_hand],Inventory),
+	isMember([antimatter, in_hand],Inventory),
+	position(Location),
+	isMember([player, hall_D],Location),
 	retract(scene(1)),
 	assertz(scene(2)),
-	position(Location),
-	isMember([player,hall_D],Location),
 	retract(ruby(0)),
 	assertz(ruby(1)),
 	notify,!.
 	
 update_scene :-
+	scene(2),
 	turn(Z),
 	Z > 45,
 	broken(L),
 	length(L,N),
 	N > 3,
-	scene(_),
-	retract(scene(_)),
-	assertz(scene(9)),
+	retract(scene(2)),
+	assertz(scene(99)),
 	weak, !.
 	
 update_scene :-
+	scene(2),
 	turn(Z),
-	Z > 45,
-	write('the story progression is not updated yet'),nl,!.
+	Z =< 45,
+	broken(B),
+	\+isMember([engine_A,_],B),
+	\+isMember([engine_B,_],B),
+	locked(L),
+	append(L,[freezer],O),
+	append(O,[cooling_system],P),
+	rember(P,cockpit,M),
+	retract(locked(L)),
+	assertz(locked(M)),
+	retract(corrupted(0)),
+	assertz(corrupted(1)),
+	retract(scene(2)),
+	assertz(scene(3)),
+	retract(ruby(0)),
+	assertz(ruby(1)),
+	notify,!.
 	
+update_scene :-
+	scene(2),
+	turn(Z),
+	Z =< 45,
+	broken(B),
+	\+isMember([freezer,_],B),
+	\+isMember([cooling_system,_],B),
+	locked(L),
+	append(L,[engine_A],O),
+	append(O,[engine_B],P),
+	retract(locked(L)),
+	assertz(locked(P)),
+	retract(scene(2)),
+	assertz(scene(3)),
+	retract(ruby(0)),
+	assertz(ruby(1)),
+	retract(guy(0)),
+	assertz(guy(1)),
+	notify,!.
+
+update_scene :-
+	scene(3),
+	turn(Z),
+	Z > 75,
+	retract(scene(3)),
+	assertz(scene(99)),
+	weak, !.
+
+update_scene :-
+	scene(3),
+	turn(Z),
+	Z =< 75,
+	at(Inventory),
+	isMember([chip, in_hand],Inventory),
+	retract(scene(3)),
+	assertz(scene(4)),
+	retract(ruby(0)),
+	assertz(ruby(1)),
+	retract(guy(0)),
+	assertz(guy(1)),
+	notify,!.
+	
+update_scene :-
+	position(Location),
+	isMember([player, capsule],Location),
+	scene(_),
+	retract(scene(_)),
+	assertz(scene(6)),
+	weak,!. /*using weak as end game message*/
+	
+update_scene :-
+	scene(4),
+	position(Location),
+	isMember([player, capsule],Location),
+	scene(_),
+	retract(scene(_)),
+	assertz(scene(5)),
+	weak,!. /*using weak as end game message*/
+	
+	
+	
+update_scene.
+	
+/*these rules organise notification to player between scenes*/
+
+notify :- scene(2),
+	write('Your communicator is blinking'), nl,
+	write('Signal with id ''ruby'' .'), nl,!.
+
+notify :- scene(3),
+	write('You hear rumble from across the room.'),nl,
+	write('it sounds like there is something collapsing on another room.'),nl,nl,
+	write('Your communicator is blinking differently'), nl,
+	write('There are two signals,'), nl,
+	write('one is ''ruby'' and the other is ''id4d414b4f''. '), nl,!.
+	
+notify :- scene(4),
+	write('You feel the floor you are in are about to colapse'),nl,nl,
+	write('Somehow your communicator is blinking in harmony of white and red'), nl,
+	write('There are two signals,'), nl,
+	write('one is ''ruby'' and the other is ''id4d414b4f''. '), nl,!.
 
 /* These rules describe your conversation with the NPC */
 talk(alien) :-
@@ -701,7 +865,7 @@ talk(ruby) :- ruby(1),scene(1),
 	
 	write('now your communicator is flashing red light'), nl,
 	write('it says that it is an unauthorized signal'), nl,
-	write('the signal has an id of '' id4d414b4f '''), nl,!.
+	write('the signal has an id of ''id4d414b4f '','), nl,!.
 
 
 talk(id4d414b4f) :-  guy(1),scene(1),
@@ -722,12 +886,16 @@ talk(ruby) :- ruby(1),scene(2),
 	write('\t and to kitchen to take an equalizer from there.'), nl,
 	write('\t return to your original place after that.'), nl,
 	write('\t then proceed to west and fix the freezer using nitrogen and'),nl,
-	write('\t go north to fix cooling system using stabilizer.'),nl,
+	write('\t go north to fix cooling system using equalizer.'),nl,
 	write('\t return and request signal from me"'), nl,
 	write('\t *bzzt*"'), nl,
 	write('\t *bzzt* security system that there is unknown *bzzt* lurking around. *bzzt*"'), nl,
 	write('\t be careful'), nl,
-	retract(ruby(1)), assertz(ruby(0)),!.
+	retract(ruby(1)), assertz(ruby(0)),
+	retract(guy(0)), assertz(guy(1)),nl,
+	
+	write('now your communicator is flashing red light'), nl,
+	write('an unauthorized signal with an id of ''id4d414b4f ''.'), nl,!.
 	
 talk(id4d414b4f) :-  guy(1),scene(2),
 	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
@@ -832,15 +1000,12 @@ go(Direction) :-
         position(Ls),
 	isMember([player, Here], Ls),
         path(Here, Direction, There),
-	attacked,
 	rember(Ls, [player, Here], Xs),
 	append(Xs, [player, There], A),
         retract(position(Ls)),
         assertz(position(A)),
-	retract(steps(M)),
-	N is M + 1,
-	assertz(steps(N)),
 	next_turn,
+	attacked,
         look, !.
 go(_) :-
 	dark(yes),
@@ -875,11 +1040,42 @@ suffocate(X) :-
 
 suffocate(_).
 
+/* this rules tells different ways player can die*/
+weak :-
+	scene(S),
+	S = 6,
+	write('fuck yeah. why would you listen to anyone. '), nl,
+	write('having body that doesn''t explode along with the ship is what matters.'), nl,
+	write('you rest assured setting the capsule''s track back to Earth.'), nl,
+	die,!.
+	
+weak :-
+	scene(S),
+	S = 5,
+	write('END GAME MESSAGE NOT FINISHED YET'), nl,
+	die,!.
+
+weak :-
+	scene(S),
+	S = 99,
+	write('Things are happening so fast.'), nl,
+	write('You saw flashes of light and nothing more.'), nl,
+	write('The ship exploded.'), nl,
+	die, !.
+	
+weak :-
+	scene(S),
+	S = 98,
+	write('Things are happening so fast.'), nl,
+	write('You saw vortex of fire filling up the room.'), nl,
+	write('You are burned alive.'), nl,
+	die, !.
+
 weak :-
 	hp(L),
 	isMember([player, X], L),
 	X =< 0,
-	write('You died'), nl, nl,
+	write('You died.'), nl, nl,
 	die, !.
 
 weak.
@@ -904,10 +1100,15 @@ look :-
 notice_objects_at(Place) :-
 	at(L),
         isMember([X, Place], L),
-	write('There is a '), write(X), write(' here.'), nl, nl,
-        fail.
+	rember(L, [X, Place], Ls),
+	write('There is a '), write(X), write(' here.'), nl,
+	retract(at(L)),
+	assertz(at(Ls)),
+	notice_objects_at(Place),
+	retract(at(Ls)),
+	assertz(at(L)), !.
 
-notice_objects_at(_).
+notice_objects_at(_) :- nl.
 
 
 /* This rules decrease an NPC's HP */
@@ -970,9 +1171,9 @@ die :-
 
 finish :-
         nl,
-	steps(Step),
+	turn(Step),
 	items(Item),
-	write('Total steps taken : '), write(Step), nl,
+	write('Total turn taken : '), write(Step), nl,
 	write('Total items taken : '), write(Item), nl,
 	write('Please enter the "quit." command.'), nl,
 	check_quest,
@@ -999,7 +1200,7 @@ check_main :-
 
 
 /* This rule will terminate the program and quit */
-quit :- break.
+quit :- halt.
 
 
 /* This rule just writes out game instructions. */
@@ -1084,7 +1285,7 @@ run(load(X)) :- load(X), !.
 run(talk(X)) :- talk(X), !.
 run(attack(X)) :- attack(X), !.
 run(stat) :- stat, !.
-run(turn) :- turn, !. 
+run(showturn) :- showturn, !. 
 run(start) :- start, !.
 run(instructions) :- instructions, !.
 run(investigate) :- investigate, !.
@@ -1112,7 +1313,7 @@ check_script :-
 	write('you have just woken up from a strange slumber. the room you were in is pitch black. '), nl,
 	write('you remembered holding a communicator and you do holding one. '), nl,
 	write('A signal from it spewing out dim lights from the device impatiently waiting to be responded.'), nl,
-	write('the signal id is '' ruby '''), nl,
+	write('the signal id is ''ruby '''), nl,
 	nl,
 	rember(L,1,Ls),
 	retract(script(L)),
@@ -1136,7 +1337,7 @@ describe(hall_A) :-
 
 describe(storage) :-
         write('You are inside the storage. there are many equipments here but'), nl,
-        write('it seems broken. Better not use any of it. To the ease is Hall A.'), nl.
+        write('it seems broken. Better not use any of it. To the east is Hall A.'), nl.
 
 describe(system_room) :-
         write('You are inside the system room. It''s full of computer-like things.'), nl,
@@ -1283,7 +1484,7 @@ sense_alien.
 
 /* Main Objective */
 /* These fact define which room need reparation and parts available*/
-machine([fuel_tank, system_room, engine_A, engine_B, freezer,cooling_system]).
+machine([fuel_tank, system_room, engine_A, engine_B, freezer, cooling_system]).
 parts([antimatter, chip, coreA, coreB, nitrogen, equalizer]).
  
 /* These rules assign random parts for a machine 
