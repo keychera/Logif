@@ -415,6 +415,8 @@ reveal :-
 	reveal, fail.
 reveal.
 
+investigate :- attacked,next_turn,!.
+
 investigate :-
 	reveal,
 	dark(yes),
@@ -458,6 +460,8 @@ investigate :-
 
 
 /* These rules describe how to pick up an object. */
+take(_) :- attacked,next_turn,!.
+
 take(X) :-
         at(L),
 	isMember([X, in_hand],L),
@@ -486,6 +490,7 @@ take(_) :-
 
 
 /* These rules describe how to put down an object. */
+
 drop(X) :-
         position(Ls),
 	isMember([player, Place], Ls),
@@ -498,7 +503,7 @@ drop(X) :-
 	retract(items(M)),
 	N is M - 1,
 	assertz(items(N)),
-        write('You dropped '),
+        write('You dropped the '),
 	write(X),
         nl, nl.
 
@@ -508,6 +513,8 @@ drop(_) :-
 
 
 /* These rules define what object you can use and how to use them */
+use(_) :- attacked,next_turn,!.
+
 use(oxygen) :-
 	at(L),
 	isMember([oxygen, in_hand], L),
@@ -626,6 +633,8 @@ write_manual([A|L]) :-
 
 
 /* These rules describe how to repair a machine */
+repair :- attacked,next_turn,!.
+
 repair :- 
 	position(P),
 	at(L),
@@ -679,8 +688,8 @@ update_scene :-
 	Z > 50,
 	floor1(DangerousLocation),
 	position(Location),
-	isMember(X,DangerousLocation),
-	isMember(X,Location),
+	isMember([player,X],Location),
+	isMember([player,X],DangerousLocation),
 	scene(_),
 	retract(scene(_)),
 	assertz(scene(98)),
@@ -688,14 +697,16 @@ update_scene :-
 	
 the code below is originally used to unlock capsule when
 system room is repaired, but somehow it acts like it cuts as if we use a '!'
-
+*/
 update_scene :-
+	locked(Lc),
+	isMember(capsule,Lc),
 	broken(B),
 	\+isMember([system_room,_],B),
 	locked(L),
 	rember(L,capsule,M),
 	retract(locked(L)),
-	assertz(locked(M)). don't put them ! here*/
+	assertz(locked(M)), fail. /*don't put them ! here*/
 	
 update_scene :-
 	scene(1),
@@ -744,8 +755,8 @@ update_scene :-
 	\+isMember([engine_A,_],B),
 	\+isMember([engine_B,_],B),
 	locked(L),
-	append(L,[freezer],O),
-	append(O,[cooling_system],P),
+	append(L,freezer,O),
+	append(O,cooling_system,P),
 	rember(P,cockpit,M),
 	retract(locked(L)),
 	assertz(locked(M)),
@@ -769,8 +780,8 @@ update_scene :-
 	\+isMember([freezer,_],B),
 	\+isMember([cooling_system,_],B),
 	locked(L),
-	append(L,[engine_A],O),
-	append(O,[engine_B],P),
+	append(L,engine_A,O),
+	append(O,engine_B,P),
 	retract(locked(L)),
 	assertz(locked(P)),
 	retract(scene(2)),
@@ -832,44 +843,48 @@ update_scene.
 
 notify :- scene(1),ruby(1),
 	write('Your communicator is blinking calmly'), nl,
-	write('it has signal with id ''ruby'' .'), nl,!.
+	write('it has signal with id ''ruby'' .'), nl,nl,!.
 
 notify :- scene(2),ruby(1),
 	write('Your communicator is blinking rapidly'), nl,
-	write('it has signal with id ''ruby'' .'), nl,!.
+	write('it has signal with id ''ruby'' .'), nl,nl,!.
+	
+notify :- scene(2),guy(1),
+	write('Your communicator is blinking rapidly'), nl,
+	write('it has signal with id ''id4d414b4f'' .'), nl,nl,!.
 
 notify :- scene(3),ruby(1),guy(1),
 /*	write('You hear rumble from across the room.'),nl,
 	write('it sounds like there is something collapsing on another room.'),nl,nl,*/
 	write('Your communicator is blinking differently'), nl,
 	write('There are two signals,'), nl,
-	write('one is ''ruby'' and the other is ''id4d414b4f''. '), nl,!.
+	write('one is ''ruby'' and the other is ''id4d414b4f''. '),nl, nl,!.
 	
 notify :- scene(3),ruby(1),
 	write('Your communicator is blinking white light wearily'), nl,
 	write('There are one signal left,'), nl,
-	write('one with id ''ruby''. '), nl,!.
+	write('one with id ''ruby''. '), nl,nl,!.
 
 notify :- scene(3),guy(1),
 	write('Your communicator is blinking red light alarmingly'), nl,
 	write('There are one signal left,'), nl,
-	write('one with id ''id4d414b4f''. '), nl,!.
+	write('one with id ''id4d414b4f''. '), nl,nl,!.
 	
 notify :- scene(4),ruby(1),guy(1),
 /*	write('You feel the floor you are in are about to colapse'),nl,nl,*/
 	write('Your communicator is blinking in harmony of white and red'), nl,
 	write('There are two signals,'), nl,
-	write('one is ''ruby'' and the other is ''id4d414b4f''. '), nl,!.
+	write('one is ''ruby'' and the other is ''id4d414b4f''. '), nl,nl,!.
 	
 notify :- scene(4),ruby(1),
 	write('Your communicator is blinking white light'), nl,
 	write('There are one signal left,'), nl,
-	write('one with id ''ruby''. '), nl,!.
+	write('one with id ''ruby''. '), nl,nl,!.
 	
 notify :- scene(4),guy(1),
 	write('Your communicator is blinking red light'), nl,
 	write('There are one signal left,'), nl,
-	write('one with id ''id4d414b4f''. '), nl,!.
+	write('one with id ''id4d414b4f''. '), nl,nl,!.
 	
 notify.
 
@@ -1000,8 +1015,8 @@ talk(X) :-
 
 /* This rules describe how you skip turn */
 wait :-
-	next_turn,
 	write('You stay still for a minute'), nl, nl,
+	next_turn,
 	sense_alien.
 
 
@@ -1019,25 +1034,33 @@ u :- go(u).
 d :- go(d).
 
 
-/* This rule tells how to move in a given direction. */
-attacked :-
-	dark(yes),
-	position(Ls),
-	isMember([player, Place], Ls),
-	isMember([alien, Place], Ls),
-	damaged(player, 10),
-	write('Something attacked you. Your HP -10'),
-	weak, nl, nl, fail.
+/* this rules control alien attack behaviour*/
+
 attacked :-
 	dark(no),
 	position(Ls),
 	isMember([player, Place], Ls),
 	isMember([alien, Place], Ls),
-	damaged(player, 5),
-	write('The moment you move, the alien flies towards you'), nl,
-	write('The alien slashed you, your HP -5'), 
-	weak, nl, nl, fail.
-attacked.
+	damaged(player, 30),
+	write('You met a weird looking creature!'), nl,
+	write('The alien seems quite angry to be exposed to such a light from the flashlight!'), nl,
+	write('It slashed you, your HP -30'), nl,nl,	
+	retract(dark(no)),
+	assertz(dark(yes)),
+	drop(flashlight),
+	write('the room became dark again.'), nl, nl,
+	weak, nl, nl, !.
+	
+attacked :-
+	position(Ls),
+	isMember([player, Place], Ls),
+	isMember([alien, Place], Ls),
+	damaged(player, 10),
+	write('Something attacked you! Your HP -10'),nl,
+	write('You better not do anything or move away!'),
+	weak, nl, nl, !.
+	
+/* This rule tells how to move in a given direction. */
 	
 go(Direction) :-
         position(Ls),
@@ -1056,9 +1079,15 @@ go(Direction) :-
 	append(Xs, [player, There], A),
         retract(position(Ls)),
         assertz(position(A)),
+	look,	
 	next_turn,
-	attacked,
-        look, !.
+	!.
+go(u) :- 
+	write('there is no more stair upwards'), nl, nl,!.
+	
+go(d) :- 
+	write('there is no more stair downwards'), nl, nl,!.
+	
 go(_) :-
 	dark(yes),
         write('OUCH!! Looks like there''s a wall here.'), nl, nl.
@@ -1135,6 +1164,7 @@ weak.
 
 
 /* This rule tells how to look around you. */
+
 look :-
 	dark(yes),
 	write('It''s so dark here, where am I?'), nl, nl, 
@@ -1196,7 +1226,7 @@ attack(alien) :-
 	check(alien),
 	weak, !.
 attack(_) :-
-	write('I don''t see it here'), nl, nl.
+	write('invalid target'), nl, nl.
 
 check(alien) :-
 	hp(L),
@@ -1253,7 +1283,7 @@ check_main :-
 
 
 /* This rule will terminate the program and quit */
-quit :- halt.
+quit :- break.
 
 
 /* This rule just writes out game instructions. */
@@ -1316,6 +1346,8 @@ write_item(L) :-
 	rember(L, [Item, in_hand], Ls),
 	write(Item), nl, write_item(Ls).
 write_item(_).
+
+bag :- attacked,next_turn,!.
 
 bag :-
 	write('Your inventory :'), nl, fail.
@@ -1392,7 +1424,8 @@ describe(cockpit) :-
 
 describe(hall_A) :-
         write('You are in Hall A. To the north is the cockpit.'), nl,
-        write('To the south is the docking module. To the west is the storage.'), nl,
+        write('To the south is the dair lock leading to escape capsule room. '),nl,
+		write('To the west is the storage.'), nl,
         write('To the east is system room. There is a stairs that lead downstairs'), nl.
 
 describe(storage) :-
@@ -1471,11 +1504,27 @@ describe(fuel_tank) :-
         write('You are inside the fuel tank room. To the north is Hall D.'), nl.
 		
 describe(engine_A) :-
+		locked(Lc),
+		isMember(engine_A,Lc),
+		write('It''s the engine room, the door is locked '), nl,
+		write('You hear rumble from the room'), nl,
+		write('it feels like something is about to explode inside'), nl,
+		!.
+
+describe(engine_A) :-
         write('You are in engine room A. To the north is the engine room B.'), nl,
 	write('To the west is Hall D.'), nl.
 		
 describe(engine_B) :-
         write('You are in engine room B. To the south is the engine room A.'), nl.
+		
+describe(freezer) :-
+		locked(Lc),
+		isMember(freezer,Lc),
+		write('It''s the freezer room, the door is locked '), nl,
+		write('You hear rumble from the room'), nl,
+		write('it feels like something is about to explode inside'), nl,
+		!.
 		
 describe(freezer) :-
         write('You are inside the freezer. To the north is the cooling system room.'), nl,
@@ -1487,8 +1536,8 @@ describe(cooling_system) :-
 
 /* AI for the alien */
 /* These rules choose random movement */
-ways([s, e, u, n, s, d, w, n, d, e, w, w, s, n, u, d, u, e]).
-places([cockpit, hall_A, storage, system_room, sample_room, air_lock, capsule, hall_B, dining, kitchen, bathroom, bedroom_A, hall_C, closet, bedroom_B, lab_A, lab_B, hall_D, engine_A, engine_B, life_support, freezer, cooling_system, fuel_tank]).
+ways([s, e, n, s, w, n, e, w, w, s, n, e]).
+places([hall_B, dining, kitchen, bathroom, bedroom_A, hall_C, closet, bedroom_B, lab_A, lab_B]).
 random_move(Movement) :-
 	ways(L),
 	length(L, Length),
@@ -1544,7 +1593,7 @@ sense_alien :-
 	position(Ls),
 	isMember([player, Place], Ls),
 	isMember([alien, Place], Ls),
-	write('The alien is staring at you intensely'), nl, nl, !.
+	attacked, nl, nl, !.
 sense_alien.
 
 
