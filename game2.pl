@@ -180,8 +180,8 @@ init_new :-
 	clear_data,
 	/* These facts tell where the various objects in the game
 	   are located. */
-	assertz(at([[flashlight,in_hand],[communicator,in_hand],[oxygen,storage], [oxygen,life_support], [sample,sample_room], [antimatter,lab_B],[nitrogen,lab_A], [coreA, bedroom_B], [coreB, closet], [equalizer,kitchen],[chip,bathroom]])),
-	assertz(hidden([[knife,bedroom_A]])),
+	assertz(at([[flashlight,in_hand],[communicator,in_hand],[oxygen,storage], [oxygen,life_support], [sample,sample_room], [antimatter,lab_B], [coreA, bedroom_B], [equalizer,kitchen]])),
+	assertz(hidden([[knife,bedroom_A],[nitrogen,lab_A], [coreB, closet],[chip,bathroom]])),
 	/* This fact describes your initial oxygen level */
 	assertz(oxygen_level(100)),
 	/* This fact states initial position of every NPC */
@@ -1016,8 +1016,8 @@ talk(X) :-
 /* This rules describe how you skip turn */
 wait :-
 	write('You stay still for a minute'), nl, nl,
-	next_turn,
-	sense_alien.
+	sense_alien,
+	next_turn.
 
 
 /* These rules define the six direction letters as calls to go/1. */
@@ -1049,7 +1049,7 @@ attacked :-
 	assertz(dark(yes)),
 	drop(flashlight),
 	write('the room became dark again.'), nl, nl,
-	weak, nl, nl, !.
+	weak,!.
 	
 attacked :-
 	position(Ls),
@@ -1083,10 +1083,10 @@ go(Direction) :-
 	next_turn,
 	!.
 go(u) :- 
-	write('there is no more stair upwards'), nl, nl,!.
+	write('there is no stair upwards'), nl, nl,!.
 	
 go(d) :- 
-	write('there is no more stair downwards'), nl, nl,!.
+	write('there is no stair downwards'), nl, nl,!.
 	
 go(_) :-
 	dark(yes),
@@ -1283,7 +1283,7 @@ check_main :-
 
 
 /* This rule will terminate the program and quit */
-quit :- break.
+quit :- halt.
 
 
 /* This rule just writes out game instructions. */
@@ -1319,6 +1319,7 @@ start :-
 	instructions,
 	stat,
 	write('press Enter to start the game'), nl, get_single_char(_),
+	write('\33\[2J'),
 	check_script,
 	write('It''s so dark here, you don''t really know where you are'),nl,nl,
 	write('you feel obligated to respond Ruby.'), nl,
@@ -1330,6 +1331,7 @@ loop :-
 	write('> Input command : '),
 	nl,
 	read(X),
+	write('\33\[2J'),
 	run(X),
 	X = secret.
 /* This rules is used for debugging */
