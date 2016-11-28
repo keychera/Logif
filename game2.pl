@@ -832,11 +832,11 @@ update_scene.
 
 notify :- scene(1),ruby(1),
 	write('Your communicator is blinking calmly'), nl,
-	write('Signal with id ''ruby'' .'), nl,!.
+	write('it has signal with id ''ruby'' .'), nl,!.
 
 notify :- scene(2),ruby(1),
 	write('Your communicator is blinking rapidly'), nl,
-	write('Signal with id ''ruby'' .'), nl,!.
+	write('it has signal with id ''ruby'' .'), nl,!.
 
 notify :- scene(3),ruby(1),guy(1),
 /*	write('You hear rumble from across the room.'),nl,
@@ -909,7 +909,7 @@ talk(ruby) :- ruby(1),scene(1),
 talk(id4d414b4f) :-  guy(1),scene(1),
 	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
 	write('\t follow this instruction precisely. '), nl,
-	write('\t you are in Hall D. '), nl,
+	write('\t make sure you are in Hall D. '), nl,
 	write('\t go upstair. go south. '), nl,
 	write('\t go west. go north.  '), nl,
 	write('\t take antimatter. go back to Hall D. '), nl,
@@ -1038,6 +1038,15 @@ attacked :-
 	write('The alien slashed you, your HP -5'), 
 	weak, nl, nl, fail.
 attacked.
+	
+go(Direction) :-
+        position(Ls),
+	isMember([player, Here], Ls),
+        path(Here, Direction, There),
+	locked(Lc),
+	isMember(There,Lc),
+	describe(There),
+	!.
 	
 go(Direction) :-
         position(Ls),
@@ -1371,6 +1380,13 @@ describe(death).
 describe(_) :-
 	check_script, fail.
 
+describe(cockpit) :- 
+		locked(Lc),
+		isMember(cockpit,Lc),
+        write('[ENGINE DOWN. SAFETY PROTOCOL DOOR LOCKING MECHANISM ACTIVE]'), nl,nl,
+        write('It''s the cockpit, you can''t enter the room'), nl,
+		!.
+		
 describe(cockpit) :-
         write('You are inside the cockpit. To the south is Hall A'), nl.
 
@@ -1395,12 +1411,19 @@ describe(air_lock) :-
         write('To the south is escape capsule.'), nl.
 
 describe(capsule) :-
-	\+(broken([])),
-        write('You are inside the escape capsule. The exit is to the north.'), nl.
+		locked(Lc),
+		isMember(capsule,Lc),
+        write('it''s the escape capsule room. the door is offline.'),nl,
+		write('you have to fix system room first'), nl,
+		!.
+
 describe(capsule) :-
+        write('You are inside the escape capsule.'), nl.
+
+/*describe(capsule) :-
         write('You are inside the escape capsule. It looks like the capsule is repaired'), nl,
 	write('and functional. Use ''use(capsule)'' to go back to earth.'), nl,
-	write('The exit is to the north.'), nl.
+	write('The exit is to the north.'), nl.*/
 
 describe(hall_B) :-
         write('You are in Hall B. To the north is the dining room. To the south is'), nl,
