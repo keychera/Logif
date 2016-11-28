@@ -717,9 +717,13 @@ update_scene :-
 	isMember([player, hall_D],Location),
 	retract(scene(1)),
 	assertz(scene(2)),
-	retract(ruby(0)),
+	ruby(_),
+	retract(ruby(_)),
 	assertz(ruby(1)),
-	notify,!.
+	guy(_),
+	retract(guy(_)),
+	assertz(guy(0)),
+	!.
 	
 update_scene :-
 	scene(2),
@@ -749,9 +753,13 @@ update_scene :-
 	assertz(corrupted(1)),
 	retract(scene(2)),
 	assertz(scene(3)),
-	retract(ruby(0)),
+	ruby(_),
+	retract(ruby(_)),
 	assertz(ruby(1)),
-	notify,!.
+	guy(_),
+	retract(guy(_)),
+	assertz(guy(1)),
+	!.
 	
 update_scene :-
 	scene(2),
@@ -767,11 +775,13 @@ update_scene :-
 	assertz(locked(P)),
 	retract(scene(2)),
 	assertz(scene(3)),
-	retract(ruby(0)),
+	ruby(_),
+	retract(ruby(_)),
 	assertz(ruby(1)),
-	retract(guy(0)),
+	guy(_),
+	retract(guy(_)),
 	assertz(guy(1)),
-	notify,!.
+	!.
 
 update_scene :-
 	scene(3),
@@ -789,11 +799,13 @@ update_scene :-
 	isMember([chip, in_hand],Inventory),
 	retract(scene(3)),
 	assertz(scene(4)),
-	retract(ruby(0)),
+	ruby(_),
+	retract(ruby(_)),
 	assertz(ruby(1)),
-	retract(guy(0)),
+	guy(_),
+	retract(guy(_)),
 	assertz(guy(1)),
-	notify,!.
+	!.
 	
 update_scene :-
 	position(Location),
@@ -818,22 +830,48 @@ update_scene.
 	
 /*these rules organise notification to player between scenes*/
 
-notify :- scene(2),
-	write('Your communicator is blinking'), nl,
+notify :- scene(1),ruby(1),
+	write('Your communicator is blinking calmly'), nl,
 	write('Signal with id ''ruby'' .'), nl,!.
 
-notify :- scene(3),
-	write('You hear rumble from across the room.'),nl,
-	write('it sounds like there is something collapsing on another room.'),nl,nl,
+notify :- scene(2),ruby(1),
+	write('Your communicator is blinking rapidly'), nl,
+	write('Signal with id ''ruby'' .'), nl,!.
+
+notify :- scene(3),ruby(1),guy(1),
+/*	write('You hear rumble from across the room.'),nl,
+	write('it sounds like there is something collapsing on another room.'),nl,nl,*/
 	write('Your communicator is blinking differently'), nl,
 	write('There are two signals,'), nl,
 	write('one is ''ruby'' and the other is ''id4d414b4f''. '), nl,!.
 	
-notify :- scene(4),
-	write('You feel the floor you are in are about to colapse'),nl,nl,
-	write('Somehow your communicator is blinking in harmony of white and red'), nl,
+notify :- scene(3),ruby(1),
+	write('Your communicator is blinking white light wearily'), nl,
+	write('There are one signal left,'), nl,
+	write('one with id ''ruby''. '), nl,!.
+
+notify :- scene(3),guy(1),
+	write('Your communicator is blinking red light alarmingly'), nl,
+	write('There are one signal left,'), nl,
+	write('one with id ''id4d414b4f''. '), nl,!.
+	
+notify :- scene(4),ruby(1),guy(1),
+/*	write('You feel the floor you are in are about to colapse'),nl,nl,*/
+	write('Your communicator is blinking in harmony of white and red'), nl,
 	write('There are two signals,'), nl,
 	write('one is ''ruby'' and the other is ''id4d414b4f''. '), nl,!.
+	
+notify :- scene(4),ruby(1),
+	write('Your communicator is blinking white light'), nl,
+	write('There are one signal left,'), nl,
+	write('one with id ''ruby''. '), nl,!.
+	
+notify :- scene(4),guy(1),
+	write('Your communicator is blinking red light'), nl,
+	write('There are one signal left,'), nl,
+	write('one with id ''id4d414b4f''. '), nl,!.
+	
+notify.
 
 /* These rules describe your conversation with the NPC */
 talk(alien) :-
@@ -891,11 +929,16 @@ talk(ruby) :- ruby(1),scene(2),
 	write('\t *bzzt*"'), nl,
 	write('\t *bzzt* security system that there is unknown *bzzt* lurking around. *bzzt*"'), nl,
 	write('\t be careful'), nl,
+	
 	retract(ruby(1)), assertz(ruby(0)),
 	retract(guy(0)), assertz(guy(1)),nl,
-	
+
 	write('now your communicator is flashing red light'), nl,
 	write('an unauthorized signal with an id of ''id4d414b4f ''.'), nl,!.
+	
+	
+	
+	
 	
 talk(id4d414b4f) :-  guy(1),scene(2),
 	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
@@ -952,7 +995,7 @@ talk(id4d414b4f) :-  guy(1),scene(4),
 
 talk(X) :-
 	write(X),
-	write(' there isn''t any entity named that to talk to'), nl, nl, !.
+	write('invalid target'), nl, nl, !.
 
 
 /* This rules describe how you skip turn */
@@ -1021,6 +1064,7 @@ next_turn :-
 	Z is W + 1,
 	suffocate(Y),
 	update_scene,
+	notify,
 	retract(oxygen_level(X)),
 	assertz(oxygen_level(Y)),
 	retract(turn(W)),
@@ -1237,7 +1281,7 @@ start :-
 	stat,
 	write('press Enter to start the game'), nl, get_single_char(_),
 	check_script,
-	write('It''s so dark here, you don''t really know where you are'),nl,
+	write('It''s so dark here, you don''t really know where you are'),nl,nl,
 	write('you feel obligated to respond Ruby.'), nl,
 	write('respond Ruby by typing ''talk(ruby).'' .'), nl,
 	loop.
