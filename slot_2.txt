@@ -1,0 +1,16 @@
+date(2016,11,29,7,58,50.885154962,-25200,-,-).
+[[flashlight,in_hand],[communicator,in_hand],[oxygen,storage],[oxygen,life_support],[sample,sample_room],[antimatter,lab_B],[coreA,bedroom_B],[equalizer,kitchen]].
+[[knife,bedroom_A],[nitrogen,lab_A],[coreB,closet]].
+86.
+[[ruby,cockpit],[player,system_room],[alien,hall_B]].
+yes.
+[[player,100],[alien,30]].
+[2,3,4].
+11.
+3.
+[[fuel_tank,antimatter],[engine_A,coreA],[engine_B,coreB],[freezer,nitrogen],[cooling_system,equalizer]].
+1.
+1.
+0.
+[cockpit,capsule].
+0.
