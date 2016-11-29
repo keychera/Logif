@@ -600,7 +600,7 @@ use(knife) :-
 	write('You notice a small message inscribed on the metal, saying...'), nl,
 	write('''kill what''s not human'''), nl,
 	nl,
-	write('SIDE QUEST DISCOVERED : Killing the alien'), nl,
+	write('SIDE QUEST DISCOVERED : Kill the alien'), nl,
 	retract(sidequest(0)),
 	assertz(sidequest(1)),
 	nl, !.
@@ -1541,8 +1541,8 @@ check_main :-
 	hp(L),
 	isMember([player, HP], L),
 	HP > 0,
-	write('MAIN QUEST FINISHED : Escape the spaceship alive'), nl,
-	write('ending #2'), nl,
+	write('MAIN QUEST FINISHED : Listen to ruby'), nl,
+	write('ending #1'), nl,
 	write('You listened to Ruby'), nl, 
 	!.
 	
@@ -1553,7 +1553,7 @@ check_main :-
 	hp(L),
 	isMember([player, HP], L),
 	HP > 0,
-	write('MAIN QUEST FINISHED : Escape the spaceship alive'), nl,
+	write('MAIN QUEST NOT FINISHED'), nl,
 	write('ending #2'), nl,
 	write('You saved Ruby'), nl, 
 	!.
@@ -1565,20 +1565,22 @@ check_main :-
 	hp(L),
 	isMember([player, HP], L),
 	HP > 0,
-	write('MAIN QUEST FINISHED : Escape the spaceship alive'), nl,
+	write('MAIN QUEST NOT FINISHED'), nl,
 	write('ending #3'), nl,
 	write('On your own'), nl,
 	!.
 
 check_main :-
-	write('MAIN QUEST NOT FINISHED  : Escape the spaceship alive'),nl.
+	write('MAIN QUEST NOT FINISHED'),nl.
+	write('You died'), nl,
+	!.
 
 /*this rules checks whether side quest is achieved or not*/
 
 check_side :-
 	position(L),
 	isMember([alien,death],L),
-	write('SIDE QUEST FINISHED : killing the alien'),nl,!.
+	write('SIDE QUEST FINISHED : Kill the alien'),nl,!.
 
 check_side :-
 	write('SIDE QUEST NOT FINISHED'),nl.
@@ -1593,24 +1595,27 @@ instructions :-
         nl,
         write('Enter commands using standard Prolog syntax.'), nl,
         write('Available commands are:'), nl,
-        write('start.                   -- to start a new game.'), nl,
-        write('n.  s.  e.  w.  u.  d.   -- to go in that direction.'), nl,
-        write('wait.                    -- to skip 1 turn.'), nl,
-        write('take(Object).            -- to pick up an object.'), nl,
-        write('drop(Object).            -- to put down an object.'), nl,
-        write('use(Object).             -- to use an object.'), nl,
-        write('save(1 or 2).            -- to save current game in slot 1 / 2.'), nl,
-        write('load(1 or 2).            -- to load save data from slot 1 / 2.'), nl,
-        write('talk(NPC).               -- to talk with NPC.'), nl,
-        write('stat.                    -- to view your current status.'), nl,
-        write('bag.                     -- to view what items you are holding now.'), nl,
-        write('look.                    -- to look around you again.'), nl,
-        write('instructions.            -- to see this message again.'), nl,
-        write('quit.                    -- to end the game and quit.'), nl,
-        write('rescue.                  -- to rescue alive crewmate.'), nl,
-        write('repair.                  -- to repair a certain part of the ship.'), nl,
-        write('investigate.             -- to look around you in more detail.'), nl,
-        write('attack(NPC).             -- to attack an NPC.'), nl,
+        write('\tstart.                   -- to start a new game.'), nl,
+        write('[gameplay control]'), nl,
+        write('\tn.  s.  e.  w.  u.  d.   -- to go in that direction.'), nl,
+        write('\twait.                    -- to skip 1 turn.'), nl,
+        write('\tlook.                    -- to look around you again.'), nl,
+        write('\tinvestigate.             -- to look around you in more detail.'), nl,
+        write('\ttake(Object).            -- to pick up an object.'), nl,
+        write('\tuse(Object).             -- to use an object.'), nl,
+        write('\tdrop(Object).            -- to put down an object.'), nl,
+        write('\ttalk(NPC).               -- to talk with NPC.'), nl,
+        write('\tattack(NPC).             -- to attack an NPC.'), nl,
+        write('\trepair.                  -- to repair a certain part of the ship.'), nl,
+        write('\tstat.                    -- to view your current status.'), nl,
+        write('\tbag.                     -- to view what items you are holding now.'), nl,
+        write('\trescue.                  -- to rescue alive crewmate.'), nl,
+        write('\tquit.                    -- to end the game and quit.'), nl,
+        write('\tquest.             		-- to to see current objective.'), nl,
+        write('[other control]'), nl,
+        write('\tsave(1 or 2).            -- to save current game in slot 1 / 2.'), nl,
+        write('\tload(1 or 2).            -- to load save data from slot 1 / 2.'), nl,
+        write('\tinstructions.            -- to see this message again.'), nl,
         nl.
 
 
@@ -1683,12 +1688,14 @@ run(rescue) :- rescue, !.
 run(repair) :- repair, !.
 run(wait) :- wait, !.
 run(bag) :- bag, !.
+run(quest) :- allquest, !.
 run(n) :- n, !.
 run(s) :- s, !.
 run(w) :- w, !.
 run(e) :- e, !.
 run(u) :- u, !.
 run(d) :- d, !.
+run(secret) :- write('secret mode activated. you can enter cheats here'),nl,nl, !.
 run(_) :- write('Wrong command'), nl, nl.
 
 
@@ -1942,7 +1949,403 @@ random_assign([A|L1],Lb,L) :-
 	rember(Lb, Part, L2),
 	append(Ls,[A, Part],L),
 	random_assign(L1,L2,Ls).*/
+	
+allquest :-
+	quest,
+	side.
+	
+side :-
+	position(L),
+	\+isMember([alien,death],L),
+	sidequest(1),
+	write('Side Quest: -Kill the alien'),nl,nl,!.
 
+side.
+
+/* These rules tells player about the ongoing quest */
+quest:- 
+	scene(1),ruby(1),
+	write('Main Quest: -Find out what''s going on.'),nl,nl,!.
+
+quest:-
+	scene(1),ruby(0),
+	at(L),
+	\+isMember([antimatter, in_hand], L),
+	write('Main Quest: -Retrieve antimatter from Lab B.'),nl,nl,!.
+
+quest:-
+	scene(1),
+	at(L),
+	isMember([antimatter, in_hand], L),
+	write('Main Quest: -Return to Hall D.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(1),
+	position(L),
+	at(S),
+	isMember([player,hall_D],L),
+	isMember([antimatter, in_hand], S),
+	write('Main Quest: -Respond to Ruby''s signal.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(0),guy(1),
+	position(L),
+	at(S),
+	isMember([player,hall_D],L),
+	isMember([antimatter, in_hand], S),
+	write('Main Quest: -Go to fuel tank room.'),nl,
+	write('Side Quest: -Respond unknown signal.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(0),guy(1),
+	position(L),
+	at(S),
+	isMember([player,fuel_tank],L),
+	isMember([antimatter, in_hand], S),
+	write('Main Quest: -Repair the energy source.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(0),guy(1),
+	at(S),
+	broken(X),
+	isMember([cooling_system, equalizer],X),
+	isMember([freezer, nitrogen],X),
+	\+isMember([equalizer, in_hand], S),
+	\+isMember([nitrogen, in_hand], S),
+	\+isMember([antimatter, in_hand], S),
+	write('Main Quest: -Retrieve nitrogen in Lab A'),nl,
+	write('            -Retrieve equalizer at the kitchen.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(0),guy(1),
+	at(S),
+	isMember([nitrogen, in_hand], S),
+	broken(X),
+	isMember([cooling_system, equalizer],X),
+	isMember([freezer, nitrogen],X),
+	\+isMember([equalizer, in_hand], S),
+	\+isMember([antimatter, in_hand], S),
+	write('Main Quest: -Retrieve equalizer at the kitchen.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(0),guy(1),
+	at(S),
+	isMember([equalizer, in_hand], S),
+	broken(X),
+	isMember([cooling_system, equalizer],X),
+	isMember([freezer, nitrogen],X),
+	\+isMember([nitrogen, in_hand], S),
+	\+isMember([antimatter, in_hand], S),
+	write('Main Quest: -Retrieve nitrogen at Lab A.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(0),guy(1),
+	at(S),
+	isMember([nitrogen, in_hand], S),
+	isMember([equalizer, in_hand], S),
+	\+isMember([antimatter, in_hand], S),
+	write('Main Quest: -Fix the freezer with nitrogen.'),nl,
+	write('            -Fix the cooling system with equalizer.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(0),guy(1),
+	at(S),
+	broken(X),
+	\+isMember([nitrogen, in_hand], S),
+	isMember([equalizer, in_hand], S),
+	\+isMember([freezer, nitrogen],X),
+	\+isMember([antimatter, in_hand], S),
+	write('Main Quest: -Fix cooling system with equalizer.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(0),guy(1),
+	at(S),
+	broken(X),
+	isMember([nitrogen, in_hand], S),
+	\+isMember([equalizer, in_hand], S),
+	\+isMember([cooling_system, equalizer],X),
+	\+isMember([antimatter, in_hand], S),
+	write('Main Quest: -Fix freezer with nitrogen.'),nl,nl,!.
+
+quest:-
+	scene(2),ruby(0),
+	at(S),
+	broken(X),
+	\+isMember([nitrogen, in_hand], S),
+	\+isMember([equalizer, in_hand], S),
+	\+isMember([cooling_system, equalizer],X),
+	\+isMember([freezer, nitrogen],X),
+	\+isMember([antimatter, in_hand], S),nl,
+	write('Main Quest: -Return to respond to Ruby''s signal.'),nl,nl,!.
+
+quest:-
+	scene(3),ruby(1),
+	broken(X),
+	\+isMember([cooling_system, equalizer],X),
+	\+isMember([freezer, nitrogen],X),
+	write('Main Quest: -Return to respond to Ruby''s signal.'),nl,nl,!.
+
+quest:-
+	scene(3),ruby(0),
+	at(X),
+	\+isMember([chip, in_hand],X),
+	write('Main Quest: -Find chip somewhere in this ship.'),nl,nl,!.
+
+quest:-
+	scene(3),ruby(0),
+	at(X),
+	isMember([chip, in_hand],X),
+	write('Main Quest: -Return to respond to Ruby''s signal.'),nl,nl,!.
+
+quest:-
+	scene(4),ruby(1),
+	at(X),
+	isMember([chip, in_hand],X),
+	write('Main Quest: -Return to respond to Ruby''s signal.'),nl,nl,!.
+
+quest:-
+	scene(4),ruby(0),
+	at(X),
+	isMember([chip, in_hand],X),
+	write('Main Quest: -Fix system room with the chip.'),nl,
+	write('Side Quest: -Save the sample from sample room.'),nl,nl,!.
+
+quest:-
+	scene(4),ruby(0),
+	at(X),
+	broken(S),
+	\+isMember([system_room, chip],S),
+	\+isMember([chip, in_hand],X),
+	\+isMember([sample, in_hand],X),
+	write('Main Quest: -Escape the ship by the capsule!'),nl,
+	write('Side Quest: -Save the sample from sample room.'),nl,nl,!.
+
+quest:-
+	scene(4),ruby(0),
+	at(X),
+	broken(S),
+	\+isMember([system_room, chip],S),
+	isMember([sample, in_hand],X),
+	write('Main Quest: -Escape the ship by the capsule!'),nl,nl,!.
+
+quest:-
+	scene(4),ruby(0),
+	at(X),
+	broken(S),
+	isMember([system_room, chip],S),
+	isMember([chip, in_hand], X),
+	isMember([sample, in_hand], X),
+	write('Main Quest: -Fix system room with the chip.'),nl,nl,!.
+
+quest:-
+	scene(4),ruby(0),
+	at(X),
+	broken(S),
+	\+isMember([system_room, chip],S),
+	\+isMember([chip, in_hand],X),
+	isMember([sample, in_hand], X),
+	write('Main Quest: -Escape the ship by the capsule!'),nl,nl,!.
+
+quest:- 
+	scene(1),guy(1),
+	write('Main Quest: -Find out what''s going on.'),nl,nl,!.
+
+quest:-
+	scene(1),guy(0),
+	at(L),
+	\+isMember([antimatter, in_hand], L),
+	write('Main Quest: -Retrieve antimatter from Lab B.'),nl,nl,!.
+
+quest:-
+	scene(1),guy(0),
+	position(L),
+	at(S),
+	\+isMember([player,hall_D],L),
+	isMember([antimatter, in_hand], S),
+	write('Main Quest: -Return to Hall D.'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(L),
+	at(S),
+	isMember([player,hall_D],L),
+	isMember([antimatter, in_hand], S),
+	write('Main Quest: -Go south and fix fuel tank.'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(L),
+	at(S),
+	\+isMember([player,hall_D],L),
+	isMember([antimatter, in_hand], S),
+	write('Main Quest: -Go south of Hall D and fix fuel tank.'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	\+isMember([nitrogen, in_hand],P),
+	\+isMember([equalizer, in_hand],P),
+	\+isMember([coreA, in_hand],P),
+	\+isMember([coreB, in_hand],P),
+	write('Main Quest: -Retrieve nitrogen in Lab A.       (ruby)'),nl,
+	write('            -Retrieve equalizer at the kitchen.(ruby)'),nl,
+	write('            -Retrieve Core A on second floor.(unknown)'),nl,
+	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([nitrogen, in_hand],P),
+	write('Main Quest: -Retrieve equalizer at the kitchen.(ruby)'),nl,
+	write('            -Retrieve Core A on second floor.(unknown)'),nl,
+	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([equalizer, in_hand],P),
+	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
+	write('            -Retrieve Core A on second floor.(unknown)'),nl,
+	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
+	write('            -Retrieve equalizer at the kitchen.(ruby)'),nl,
+	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreB, in_hand],P),
+	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
+	write('            -Retrieve equalizer at the kitchen.(ruby)'),nl,
+	write('            -Retrieve Core A on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	isMember([coreB, in_hand],P),
+	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
+	write('            -Retrieve equalizer at the kitchen.(ruby)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreB, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
+	write('            -Retrieve Core A on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
+	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreB, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	write('Main Quest: -Retrieve equalizer at the kitchen.(ruby)'),nl,
+	write('            -Retrieve Core A on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	write('Main Quest: -Retrieve equalizer at the kitchen.(ruby)'),nl,
+	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([nitrogen, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	write('Main Quest: -Retrieve Core A on second floor.(unknown)'),nl,
+	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	isMember([coreB, in_hand],P),
+	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	isMember([coreB, in_hand],P),
+	write('Main Quest: -Retrieve equalizer at the kitchen.(ruby)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([equalizer, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	isMember([coreB, in_hand],P),
+	write('Main Quest: -Retrieve Core A on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([equalizer, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	isMember([coreA, in_hand],P),
+	write('Main Quest: -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([equalizer, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	isMember([coreA, in_hand],P),
+	isMember([coreB, in_hand],P),
+	write('Main Quest: -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+
+quest.
 
 /* Cheat code, use in secret */
 
