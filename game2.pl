@@ -23,6 +23,7 @@
 /*new since kevjo edit*/
 :- dynamic(locked/1).
 :- dynamic(corrupted/1).
+:- dynamic(sidequest/1).
 
 /* These rules control list */
 rember([],_,[]).
@@ -174,6 +175,9 @@ clear_data.
 clear_data :-
 	corrupted(_),
 	retract(corrupted(_)), fail.
+clear_data :-
+	sidequest(_),
+	retract(sidequest(_)), fail.
 clear_data.
 
 /* This rule load initial data for new game */
@@ -208,7 +212,9 @@ init_new :-
 	/* This facts describe which room is locked initially*/
 	assertz(locked([cockpit,capsule])),
 	/* This facts describe which room is locked initially*/
-	assertz(corrupted(0)).
+	assertz(corrupted(0)),
+	/* This facts describe whether side quest is found or not*/
+	assertz(sidequest(0)).
 	/*machine(A),
 	parts(B),
 	random_assign(A,B,C),
@@ -234,6 +240,8 @@ saving(Stream) :-
 	guy(N),
 	locked(O),
 	corrupted(P),
+	sidequest(Q),
+	
 	write(Stream,A), write(Stream,'.'), nl(Stream),
 	write(Stream,B), write(Stream,'.'), nl(Stream),
 	write(Stream,C), write(Stream,'.'), nl(Stream),
@@ -250,6 +258,7 @@ saving(Stream) :-
 	write(Stream,N), write(Stream,'.'), nl(Stream),
 	write(Stream,O), write(Stream,'.'), nl(Stream),
 	write(Stream,P), write(Stream,'.'), nl(Stream),
+	write(Stream,Q), write(Stream,'.'), nl(Stream),
 	close(Stream).
 
 save(1) :-
@@ -314,6 +323,8 @@ loading(Stream) :-
 	assertz(locked(O)),
 	read(Stream,P),
 	assertz(corrupted(P)),
+	read(Stream,Q),
+	assertz(sidequest(Q)),
 	close(Stream).
 
 load(1) :-
@@ -424,7 +435,7 @@ reveal :-
 	reveal, fail.
 reveal.
 
-investigate :- attacked,next_turn,!.
+investigate :- attacked,!.
 
 investigate :-
 	reveal,
@@ -437,17 +448,14 @@ investigate :-
 	retract(oxygen_level(X)),
 	assertz(oxygen_level(Y)),
 	nl,
-	retract(dark(yes)),
-	assertz(dark(no)),
-	look,
-	retract(dark(no)),
-	assertz(dark(yes)),
+	position(Ls),
+	isMember([player, Place], Ls),
+    describe(Place),
 	nl,
 	alien_move,
 	alien_move,
 	alien_move,
-	alien_move,
-	sense_alien.
+	sense_alien,!.
 
 investigate :-
 	reveal,
@@ -469,7 +477,7 @@ investigate :-
 
 
 /* These rules describe how to pick up an object. */
-take(_) :- attacked,next_turn,!.
+take(_) :- attacked,!.
 
 take(X) :-
         at(L),
@@ -522,7 +530,9 @@ drop(_) :-
 
 
 /* These rules define what object you can use and how to use them */
-use(_) :- attacked,next_turn,!.
+
+use(_) :- attacked,
+	!.
 
 use(oxygen) :-
 	ruby(2),
@@ -562,6 +572,7 @@ use(flashlight) :-
 	write('You turned on the flashlight'), nl, nl, 
 	look,
 	!.
+	
 use(flashlight) :-
 	at(L),
 	isMember([flashlight, in_hand], L),
@@ -576,6 +587,7 @@ use(communicator) :-
 	write('use command ''talk(<id>)'' to respond to a signal'), nl, nl, !.
 	
 use(knife) :-
+	sidequest(0),
 	at(L),
 	isMember([knife, in_hand], L),
 	rember(L, [knife, in_hand], Ls),
@@ -583,8 +595,27 @@ use(knife) :-
 	retract(at(L)),
 	assertz(at(Y)),
 	write('You hold the knife tightly'), nl,
-	write('Fortunately, you learned how to use dagger!'), nl,
-	write('Now you can attack something fast'), nl, nl, !.
+	write('Now you can attack something fast'), nl, 
+	nl,
+	write('You notice a small message inscribed on the metal, saying...'), nl,
+	write('''kill what''s not human'''), nl,
+	nl,
+	write('SIDE QUEST DISCOVERED : Killing the alien'), nl,
+	retract(sidequest(0)),
+	assertz(sidequest(1)),
+	nl, !.
+	
+use(knife) :-
+	at(L),
+	isMember([knife, in_hand], L),
+	rember(L, [knife, in_hand], Ls),
+	append(Ls, [knife, equipped], Y),
+	retract(at(L)),
+	assertz(at(Y)),
+	write('You hold the knife tightly'), nl,
+	write('Now you can attack something fast'), nl, 
+	nl, !.
+
 use(knife) :-
 	at(L),
 	isMember([knife, equipped], L),
@@ -668,7 +699,7 @@ write_manual([A|L]) :-
 
 
 /* These rules describe how to repair a machine */
-repair :- attacked,next_turn,!.
+repair :- attacked,!.
 
 repair :- 
 	position(P),
@@ -1176,9 +1207,8 @@ rescue.
 /* This rules describe how you skip turn */
 wait :-
 	write('You stay still for a minute'), nl, nl,
-	alien_move,
-	sense_alien,
-	next_turn.
+	next_turn,
+	sense_alien.
 
 
 /* These rules define the six direction letters as calls to go/1. */
@@ -1218,7 +1248,7 @@ attacked :-
 	isMember([alien, Place], Ls),
 	damaged(player, 10),
 	write('Something attacked you! Your HP -10'),nl,
-	write('You better not do anything or move away!'),
+	write('You better wait or move away!'),
 	weak, nl, nl, !.
 	
 /* This rule tells how to move in a given direction. */
@@ -1243,9 +1273,9 @@ go(Direction) :-
 	append(Lv, [ruby, There], Lw),
         retract(position(Ls)),
         assertz(position(Lw)),
-	look,
 	talk(ruby),
 	next_turn,
+	look,
 	!.
 	
 go(Direction) :-
@@ -1256,8 +1286,8 @@ go(Direction) :-
 	append(Xs, [player, There], A),
         retract(position(Ls)),
         assertz(position(A)),
-	look,	
 	next_turn,
+	look,	
 	!.
 go(u) :- 
 	write('there is no stair upwards'), nl, nl,!.
@@ -1307,6 +1337,7 @@ weak :-
 	S = 5,
 	write('You finally get chance to rest. The capsule was warm but not for long.'), nl,
 	write('the sample you have taken reacted to different pressure inside the capsule.'), nl,nl,
+	write('the sample were corrupted'),nl,nl,
 	write('cold'), nl,
 	write('... is apparently the last thing you felt.'), nl,nl,
 	die,!.
@@ -1500,19 +1531,57 @@ finish :-
         nl, nl.
 
 check_quest :-
-	check_main.
+	check_main,
+	check_side.
 
 check_main :-
-	broken([]),
+	scene(6),
 	oxygen_level(X),
 	X > 0,
 	hp(L),
 	isMember([player, HP], L),
 	HP > 0,
-	write('MAIN QUEST FINISHED'), nl, !.
+	write('MAIN QUEST FINISHED : Escape the spaceship alive'), nl,
+	write('ending #2'), nl,
+	write('You listened to Ruby'), nl, 
+	!.
+	
 check_main :-
-	write('MAIN QUEST NOT FINISHED').
+	scene(8),
+	oxygen_level(X),
+	X > 0,
+	hp(L),
+	isMember([player, HP], L),
+	HP > 0,
+	write('MAIN QUEST FINISHED : Escape the spaceship alive'), nl,
+	write('ending #2'), nl,
+	write('You saved Ruby'), nl, 
+	!.
+	
+check_main :-
+	scene(7),
+	oxygen_level(X),
+	X > 0,
+	hp(L),
+	isMember([player, HP], L),
+	HP > 0,
+	write('MAIN QUEST FINISHED : Escape the spaceship alive'), nl,
+	write('ending #3'), nl,
+	write('On your own'), nl,
+	!.
 
+check_main :-
+	write('MAIN QUEST NOT FINISHED  : Escape the spaceship alive'),nl.
+
+/*this rules checks whether side quest is achieved or not*/
+
+check_side :-
+	position(L),
+	isMember([alien,death],L),
+	write('SIDE QUEST FINISHED : killing the alien'),nl,!.
+
+check_side :-
+	write('SIDE QUEST NOT FINISHED'),nl.
 
 /* This rule will terminate the program and quit */
 quit :- halt.
@@ -1581,7 +1650,7 @@ write_item(L) :-
 	write(Item), nl, write_item(Ls).
 write_item(_).
 
-bag :- attacked,next_turn,!.
+bag :- attacked,!.
 
 bag :-
 	write('Your inventory :'), nl, fail.
@@ -1855,11 +1924,6 @@ sense_alien :-
 	isMember([player, Place], Ls),
 	isMember([alien, Place], Ls),
 	write('Something is moving HERE!!!'), nl, nl, !.
-sense_alien :-
-	position(Ls),
-	isMember([player, Place], Ls),
-	isMember([alien, Place], Ls),
-	attacked, nl, nl, !.
 sense_alien.
 
 
