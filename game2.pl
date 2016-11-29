@@ -232,6 +232,8 @@ saving(Stream) :-
 	scene(L),
 	ruby(M),
 	guy(N),
+	locked(O),
+	corrupted(P),
 	write(Stream,A), write(Stream,'.'), nl(Stream),
 	write(Stream,B), write(Stream,'.'), nl(Stream),
 	write(Stream,C), write(Stream,'.'), nl(Stream),
@@ -246,6 +248,8 @@ saving(Stream) :-
 	write(Stream,L), write(Stream,'.'), nl(Stream),
 	write(Stream,M), write(Stream,'.'), nl(Stream),
 	write(Stream,N), write(Stream,'.'), nl(Stream),
+	write(Stream,O), write(Stream,'.'), nl(Stream),
+	write(Stream,P), write(Stream,'.'), nl(Stream),
 	close(Stream).
 
 save(1) :-
@@ -306,6 +310,10 @@ loading(Stream) :-
 	assertz(ruby(M)),
 	read(Stream,N),
 	assertz(guy(N)),
+	read(Stream,O),
+	assertz(locked(O)),
+	read(Stream,P),
+	assertz(corrupted(P)),
 	close(Stream).
 
 load(1) :-
