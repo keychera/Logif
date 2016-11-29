@@ -451,6 +451,7 @@ investigate :-
 	position(Ls),
 	isMember([player, Place], Ls),
     describe(Place),
+	notice_objects_at(Place),
 	nl,
 	alien_move,
 	alien_move,
@@ -1208,6 +1209,7 @@ rescue.
 wait :-
 	write('You stay still for a minute'), nl, nl,
 	next_turn,
+	notify,
 	sense_alien.
 
 
@@ -1276,6 +1278,7 @@ go(Direction) :-
 	talk(ruby),
 	next_turn,
 	look,
+	notify,
 	!.
 	
 go(Direction) :-
@@ -1287,7 +1290,8 @@ go(Direction) :-
         retract(position(Ls)),
         assertz(position(A)),
 	next_turn,
-	look,	
+	look,
+	notify,
 	!.
 go(u) :- 
 	write('there is no stair upwards'), nl, nl,!.
@@ -1309,7 +1313,6 @@ next_turn :-
 	Z is W + 1,
 	suffocate(Y),
 	update_scene,
-	notify,
 	retract(oxygen_level(X)),
 	assertz(oxygen_level(Y)),
 	retract(turn(W)),
@@ -1331,7 +1334,6 @@ suffocate(_).
 
 /* this rules tells different ways player can die*/
 
-	
 weak :-
 	scene(S),
 	S = 5,
@@ -1571,7 +1573,7 @@ check_main :-
 	!.
 
 check_main :-
-	write('MAIN QUEST NOT FINISHED'),nl.
+	write('MAIN QUEST NOT FINISHED'),nl,
 	write('You died'), nl,
 	!.
 
