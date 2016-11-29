@@ -1166,7 +1166,7 @@ talk(ruby) :- ruby(1),scene(4),
 	write('\t then go north to sample room "bzzt" then '), nl,
 	write('\t go back to h *cough* hall where you can go downstair but go south instead.'), nl,
 	write('\t all the way south. there is an escape capsule ready.'),nl,
-	write('\t please b..bring that sample back to earth. that is our only ho ................."'),nl,nl,
+	write('\t please b..bring that sample back to earth. that is our only hope for ................."'),nl,nl,
 	retract(ruby(1)), assertz(ruby(0)),!.
 	
 talk(id4d414b4f) :-  guy(1),scene(4),
@@ -2002,7 +2002,7 @@ quest:-
 	at(S),
 	isMember([player,fuel_tank],L),
 	isMember([antimatter, in_hand], S),
-	write('Main Quest: -Repair the energy source.'),nl,nl,!.
+	write('Main Quest: -Repair the fuel tank.'),nl,nl,!.
 
 quest:-
 	scene(2),ruby(0),guy(1),
@@ -2200,6 +2200,7 @@ quest:-
 	broken(S),
 	\+isMember([fuel_tank, antimatter], S),
 	isMember([nitrogen, in_hand],P),
+	\+isMember([equalizer, in_hand],P),
 	write('Main Quest: -Retrieve equalizer at the kitchen.(ruby)'),nl,
 	write('            -Retrieve Core A on second floor.(unknown)'),nl,
 	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
@@ -2210,6 +2211,7 @@ quest:-
 	broken(S),
 	\+isMember([fuel_tank, antimatter], S),
 	isMember([equalizer, in_hand],P),
+	\+isMember([nitrogen, in_hand],P),
 	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
 	write('            -Retrieve Core A on second floor.(unknown)'),nl,
 	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
@@ -2219,7 +2221,9 @@ quest:-
 	at(P),
 	broken(S),
 	\+isMember([fuel_tank, antimatter], S),
+	\+isMember([coreB, in_hand],P),
 	isMember([coreA, in_hand],P),
+	\+isMember([nitrogen, in_hand],P),
 	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
 	write('            -Retrieve equalizer at the kitchen.(ruby)'),nl,
 	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
@@ -2230,9 +2234,12 @@ quest:-
 	broken(S),
 	\+isMember([fuel_tank, antimatter], S),
 	isMember([coreB, in_hand],P),
+	\+isMember([coreA, in_hand],P),
 	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
 	write('            -Retrieve equalizer at the kitchen.(ruby)'),nl,
 	write('            -Retrieve Core A on second floor.(unknown)'),nl,nl,!.
+
+
 
 quest:-
 	scene(2),guy(0),ruby(0),
@@ -2241,6 +2248,7 @@ quest:-
 	\+isMember([fuel_tank, antimatter], S),
 	isMember([coreA, in_hand],P),
 	isMember([coreB, in_hand],P),
+	\+isMember([nitrogen, in_hand],P),
 	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
 	write('            -Retrieve equalizer at the kitchen.(ruby)'),nl,nl,!.
 
@@ -2251,6 +2259,7 @@ quest:-
 	\+isMember([fuel_tank, antimatter], S),
 	isMember([coreB, in_hand],P),
 	isMember([equalizer, in_hand],P),
+	\+isMember([nitrogen, in_hand],P),
 	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
 	write('            -Retrieve Core A on second floor.(unknown)'),nl,nl,!.
 
@@ -2261,6 +2270,7 @@ quest:-
 	\+isMember([fuel_tank, antimatter], S),
 	isMember([coreA, in_hand],P),
 	isMember([equalizer, in_hand],P),
+	\+isMember([nitrogen, in_hand],P),
 	write('Main Quest: -Retrieve nitrogen in Lab A.(ruby)'),nl,
 	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
 
@@ -2271,6 +2281,7 @@ quest:-
 	\+isMember([fuel_tank, antimatter], S),
 	isMember([coreB, in_hand],P),
 	isMember([nitrogen, in_hand],P),
+	\+isMember([equalizer, in_hand],P),
 	write('Main Quest: -Retrieve equalizer at the kitchen.(ruby)'),nl,
 	write('            -Retrieve Core A on second floor.(unknown)'),nl,nl,!.
 
@@ -2281,6 +2292,7 @@ quest:-
 	\+isMember([fuel_tank, antimatter], S),
 	isMember([coreA, in_hand],P),
 	isMember([nitrogen, in_hand],P),
+	\+isMember([equalizer, in_hand],P),
 	write('Main Quest: -Retrieve equalizer at the kitchen.(ruby)'),nl,
 	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
 
@@ -2291,6 +2303,7 @@ quest:-
 	\+isMember([fuel_tank, antimatter], S),
 	isMember([nitrogen, in_hand],P),
 	isMember([equalizer, in_hand],P),
+	\+isMember([coreA, in_hand],P),
 	write('Main Quest: -Retrieve Core A on second floor.(unknown)'),nl,
 	write('            -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
 
@@ -2336,14 +2349,165 @@ quest:-
 
 quest:-
 	scene(2),guy(0),ruby(0),
+	position(T),
 	at(P),
 	broken(S),
 	\+isMember([fuel_tank, antimatter], S),
-	isMember([equalizer, in_hand],P),
-	isMember([nitrogen, in_hand],P),
 	isMember([coreA, in_hand],P),
 	isMember([coreB, in_hand],P),
-	write('Main Quest: -Retrieve Core B on second floor.(unknown)'),nl,nl,!.
+	\+isMember([nitrogen, in_hand],P),
+	\+isMember([equalizer, in_hand],P),
+	\+isMember([player,hall_D],T),
+	\+isMember([player,cooling_system],T),
+	\+isMember([player,freezer],T),
+	write('Main Quest: -Go back to Hall D.'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(T),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	isMember([coreB, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	\+isMember([player,hall_D],T),
+	\+isMember([player,cooling_system],T),
+	\+isMember([player,freezer],T),
+	write('Main Quest: -Go back to Hall D.(unknown).'),nl,
+	write('            -Fix the freezer with nitrogen.(ruby)'),nl,
+	write('            -Fix the cooling system with equalizer.(ruby)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(T),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	isMember([coreB, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	isMember([player,hall_D],T),
+	\+isMember([player,cooling_system],T),
+	\+isMember([player,freezer],T),
+	write('Main Quest: -Go west.(unknown)'),nl,
+	write('            -Fix the freezer with nitrogen.(ruby)'),nl,
+	write('            -Fix the cooling system with equalizer.(ruby)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(T),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	isMember([coreB, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	\+isMember([player,hall_D],T),
+	\+isMember([player,cooling_system],T),
+	isMember([player,freezer],T),
+	write('Main Quest: -Fix engine A.(unknown)'),nl,
+	write('            -Fix the freezer with nitrogen.(ruby)'),nl,
+	write('            -Fix the cooling system with equalizer.(ruby)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(T),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	\+isMember([engine_A, coreA], S),
+	\+isMember([coreA, in_hand],P),
+	isMember([coreB, in_hand],P),
+	isMember([nitrogen, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	\+isMember([player,hall_D],T),
+	\+isMember([player,cooling_system],T),
+	isMember([player,freezer],T),
+	write('Main Quest: -Go north.(unknown)'),nl,
+	write('            -Fix the freezer with nitrogen.(ruby)'),nl,
+	write('            -Fix the cooling system with equalizer.(ruby)'),nl,nl,!.
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(T),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	\+isMember([freezer, nitrogen], S),
+	\+isMember([coreA, in_hand],P),
+	isMember([coreB, in_hand],P),
+	\+isMember([nitrogen, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	\+isMember([player,hall_D],T),
+	\+isMember([player,cooling_system],T),
+	isMember([player,freezer],T),
+	write('Main Quest: -Go north.(unknown)'),nl,
+	write('            -Fix the cooling system with equalizer.(ruby)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(T),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	\+isMember([freezer, nitrogen], S),
+	\+isMember([coreA, in_hand],P),
+	\+isMember([coreA, engine_A], S),
+	isMember([coreB, in_hand],P),
+	\+isMember([nitrogen, in_hand],P),
+	isMember([equalizer, in_hand],P),
+	\+isMember([player,hall_D],T),
+	isMember([player,cooling_system],T),
+	\+isMember([player,freezer],T),
+	write('Main Quest: -Fix engine B.'),nl,
+	write('            -Fix the cooling system with equalizer.(ruby)'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(T),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	isMember([coreA, in_hand],P),
+	isMember([coreB, in_hand],P),
+	\+isMember([player,hall_D],T),
+	isMember([player,cooling_system],T),
+	\+isMember([player,freezer],T),
+	write('Main Quest: -Fix engine B.'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(T),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	\+isMember([coreB, in_hand],P),
+	\+isMember([coreB, engine_B], S),
+	isMember([coreA, in_hand],P),
+	\+isMember([player,hall_D],T),
+	isMember([player,cooling_system],T),
+	\+isMember([player,freezer],T),
+	write('Main Quest: -Go South.'),nl,nl,!.
+
+quest:-
+	scene(2),guy(0),ruby(0),
+	position(T),
+	at(P),
+	broken(S),
+	\+isMember([fuel_tank, antimatter], S),
+	\+isMember([coreB, in_hand],P),
+	\+isMember([coreB, engine_B], S),
+	isMember([coreA, in_hand],P),
+	\+isMember([player,hall_D],T),
+	\+isMember([player,cooling_system],T),
+	isMember([player,freezer],T),
+	write('Main Quest: -Fix engine A.'),nl,nl,!.
+
+
+
 
 quest.
 
