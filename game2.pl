@@ -165,19 +165,19 @@ clear_data :-
 clear_data :-
 	turn(_),
 	retract(turn(_)), fail.
-clear_data.
 
 clear_data :-
 	locked(_),
 	retract(locked(_)), fail.
-clear_data.
 
 clear_data :-
 	corrupted(_),
 	retract(corrupted(_)), fail.
+	
 clear_data :-
 	sidequest(_),
 	retract(sidequest(_)), fail.
+	
 clear_data.
 
 /* This rule load initial data for new game */
@@ -758,7 +758,9 @@ scene3max(60).
 /*these rules organize scenes*/
 update_scene :-
 	turn(Z),
-	Z > 50,
+	scene2max(X),
+	Y is X + 5,
+	Z > Y,
 	floor1(DangerousLocation),
 	position(Location),
 	isMember([player,X],Location),
@@ -1152,34 +1154,39 @@ talk(ruby) :- ruby(1),scene(3),
 	retract(ruby(1)), assertz(ruby(0)),!.
 	
 talk(id4d414b4f) :-  guy(1),scene(3),
-	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
-	write('\t go upstair. never go downstair. investigate around for chip. '), nl,
-	write('\t my scanner says that it''s located around north side of the ship. '), nl,
-	write('\t go back to Hall B afterwards. '), nl,
-	write('\t use flashlight but carefully '), nl,nl,
+	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,nl,
+	write('\t go upstair. never go downstair. investigate around for chip. '), nl, nl,
+	write('\t my scanner says that it''s located around north side of the ship. '), nl, nl,
+	write('\t go back to Hall B afterwards. '), nl, nl,
+	write('\t use flashlight but carefully '), nl, nl,
 	retract(guy(1)), assertz(guy(0)),!.
 	
 talk(ruby) :- ruby(1),scene(4),
-	write('[AUTHORIZED SIGNAL - RUBY] [ONE WAY LIVE MESSAGE]'), nl,
-	write('\t the sig"bzzt" can''t hold up really long now so I''ll tell you this quick. '),nl,
-	write('\t main objective: sample *cough* from sample room. '), nl,
-	write('\t go upstair, go east and fix system room'), nl,
-	write('\t then go north to sample room "bzzt" then '), nl,
-	write('\t go back to h *cough* hall where you can go downstair but go south instead.'), nl,
-	write('\t all the way south. there is an escape capsule ready.'),nl,
+	write('[AUTHORIZED SIGNAL - RUBY] [ONE WAY LIVE MESSAGE]'), nl, nl,
+	write('\t the sig"bzzt" can''t hold up really long now so I''ll tell you this quick. '),nl, nl,
+	write('\t main objective: sample *cough* from sample room. '), nl, nl,
+	write('\t go upstair, go east and fix system room'), nl, nl,
+	write('\t then go north to sample room "bzzt" then '), nl, nl,
+	write('\t go back to h *cough* hall where you can go downstair but go south instead.'), nl, nl,
+	write('\t all the way south. there is an escape capsule ready.'),nl, nl,
 	write('\t please b..bring that sample back to earth. that is our only hope for ................."'),nl,nl,
 	retract(ruby(1)), assertz(ruby(0)),!.
 	
 talk(id4d414b4f) :-  guy(1),scene(4),
-	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl,
-	write('\t please save Ruby... '), nl,
-	write('\t leave the sample, go north to the cockpit '), nl,
-	write('\t and take her with you to the escape capsule"bzzt" '), nl,nl,
+	write('[UNAUTHORIZED SIGNAL - id 4b414b4f] [ONE WAY LIVE MESSAGE]'), nl, nl,
+	write('\t please save Ruby... '), nl, nl,
+	write('\t leave the sample, go north to the cockpit '), nl, nl,
+	write('\t and take her with you to the escape capsule"bzzt" '), nl, nl,
 	retract(guy(1)), assertz(guy(0)),!.
 
 talk(X) :-
 	write(X),
 	write('invalid target'), nl, nl, !.
+
+rescue :-
+	ruby(4),
+	write('rescuing corpse? not gonna happen.'), nl, nl,
+	!.
 	
 rescue :-
 	position(Ls),
@@ -1423,6 +1430,15 @@ look :-
 	dark(yes),
 	write('It''s so dark here, where am I?'), nl, nl, 
 	sense_alien, !.
+	
+look :-
+	ruby(4),
+	position(Ls),
+	isMember([player, Place], Ls),
+	isMember([ruby, Place], Ls),
+	write('You left Ruby here.'), nl, nl, 
+	fail.
+	
 look :-
         position(Ls),
 	isMember([player, Place], Ls),
@@ -1571,6 +1587,18 @@ check_main :-
 	write('ending #3'), nl,
 	write('On your own'), nl,
 	!.
+	
+check_main :-
+	scene(9),
+	oxygen_level(X),
+	X > 0,
+	hp(L),
+	isMember([player, HP], L),
+	HP > 0,
+	write('MAIN QUEST NOT FINISHED'), nl,
+	write('ending #4'), nl,
+	write('You killed Ruby'), nl,
+	!.
 
 check_main :-
 	write('MAIN QUEST NOT FINISHED'),nl,
@@ -1697,7 +1725,9 @@ run(w) :- w, !.
 run(e) :- e, !.
 run(u) :- u, !.
 run(d) :- d, !.
-run(secret) :- write('secret mode activated. you can enter cheats here'),nl,nl, !.
+run(secret) :-	write('secret mode activated. you can enter cheats here'),nl,
+				write('use command ''resume.'' to resume the game'),nl,
+				nl, !.
 run(_) :- write('Wrong command'), nl, nl.
 
 
@@ -1750,52 +1780,52 @@ describe(cockpit) :-
 		locked(Lc),
 		isMember(cockpit,Lc),
         write('[ENGINE DOWN. SAFETY PROTOCOL DOOR LOCKING MECHANISM ACTIVE]'), nl,nl,
-        write('It''s the cockpit, you can''t enter the room'), nl,
+        write('It''s the cockpit, you can''t enter the room'), nl, nl,
 		!.
 		
 describe(cockpit) :-
-		\+ruby(2),
+		ruby(0),
         write('You are inside the cockpit. you found a girl in a spacesuit lying on the floor'), nl,
         write('her space helm was broken'), nl,
         write('you read the id on the helm'), nl,
         write('''ruby'''), nl,nl,
         write('...'), nl,nl,
-        write('To the south is Hall A'), nl,
+        write('To the south is Hall A'), nl, nl,
 		!.
 		
 describe(cockpit) :-
-        write('You are inside the cockpit. To the south is Hall A'), nl.
+        write('You are inside the cockpit. To the south is Hall A'), nl, nl.
 
 describe(hall_A) :-
         write('You are in Hall A. To the north is the cockpit.'), nl,
-        write('To the south is the dair lock leading to escape capsule room. '),nl,
+        write('To the south is the air lock leading to escape capsule room. '),nl,
 		write('To the west is the storage.'), nl,
-        write('To the east is system room. There is a stairs that lead downstairs'), nl.
+        write('To the east is system room. There is a stairs that lead downstairs'), nl, nl.
 
 describe(storage) :-
         write('You are inside the storage. there are many equipments here but'), nl,
-        write('it seems broken. Better not use any of it. To the east is Hall A.'), nl.
+        write('it seems broken. Better not use any of it. To the east is Hall A.'), nl, nl.
 
 describe(system_room) :-
         write('You are inside the system room. It''s full of computer-like things.'), nl,
-        write('There is a large door to the north. To the west is Hall A.'), nl.
+        write('There is a large door to the north. To the west is Hall A.'), nl, nl.
 		
 describe(sample_room) :-
-        write('You are inside the sample room. The exit is to the south.'), nl.
+        write('You are inside the sample room. The exit is to the south.'), nl, nl.
 
 describe(air_lock) :-
         write('You are inside the air lock. The exit is to the north.'), nl,
-        write('To the south is escape capsule.'), nl.
+        write('To the south is escape capsule.'), nl, nl.
 
 describe(capsule) :-
 		locked(Lc),
 		isMember(capsule,Lc),
         write('it''s the escape capsule room. the door is offline.'),nl,
-		write('you have to fix system room first'), nl,
+		write('you have to fix system room first'), nl, nl,
 		!.
 
 describe(capsule) :-
-        write('You are inside the escape capsule.'), nl.
+        write('You are inside the escape capsule.'), nl, nl.
 
 /*describe(capsule) :-
         write('You are inside the escape capsule. It looks like the capsule is repaired'), nl,
@@ -1804,78 +1834,78 @@ describe(capsule) :-
 
 describe(hall_B) :-
         write('You are in Hall B. To the north is the dining room. To the south is'), nl,
-        write('Hall C. To the east is Bedroom B. There is a stairs that lead upstairs and downstairs'), nl.
+        write('Hall C. To the east is Bedroom B. There is a stairs that lead upstairs and downstairs'), nl, nl.
 
 describe(hall_C) :-
         write('You are in Hall C. To the north is Hall B. To the south is the closet.'), nl,
-        write('To the east is Bedroom A. To the west is Laboratory A. '), nl.
+        write('To the east is Bedroom A. To the west is Laboratory A. '), nl, nl.
 		
 describe(dining) :-
         write('You are inside the dining room. To the south is Hall B.'), nl,
-        write('To the east is the bathroom. To the west is the kitchen.'), nl.
+        write('To the east is the bathroom. To the west is the kitchen.'), nl, nl.
 		
 describe(bathroom) :-
-        write('You are inside the bathroom. To the west is the dining room.'), nl.
+        write('You are inside the bathroom. To the west is the dining room.'), nl, nl.
 		
 describe(kitchen) :-
-        write('You are inside the kitchen. To the east is dining room.'), nl.
+        write('You are inside the kitchen. To the east is dining room.'), nl, nl.
 		
 describe(bedroom_A) :-
-        write('You are in bedroom A. To the west is Hall C.'), nl.
+        write('You are in bedroom A. To the west is Hall C.'), nl, nl.
 		
 describe(bedroom_B) :-
-        write('You are in bedroom B. To the west is Hall B.'), nl.
+        write('You are in bedroom B. To the west is Hall B.'), nl, nl.
 		
 describe(lab_A) :-
         write('You are in Laboratory A. To the north is Laboratory B.'), nl,
-        write('To the east is Hall C.'), nl.
+        write('To the east is Hall C.'), nl, nl.
 		
 describe(lab_B) :-
-        write('You are in Laboratory B. To the south is Laboratory A.'), nl.
+        write('You are in Laboratory B. To the south is Laboratory A.'), nl, nl.
 		
 describe(closet) :-
-        write('You are inside the closet. To the north is Hall C.'), nl.
+        write('You are inside the closet. To the north is Hall C.'), nl, nl.
 		
 describe(hall_D) :-
         write('You are in Hall D. To the north is the life support system room.'), nl,
 	write('To the south is the fuel tank. To the east is Engine room A.'), nl,
-	write('To the west is the freezer. There is a stairs that lead upstairs.'), nl.
+	write('To the west is the freezer. There is a stairs that lead upstairs.'), nl, nl.
 		
 describe(life_support) :-
-        write('You are inside the life support system room. To the south is Hall D'), nl.
+        write('You are inside the life support system room. To the south is Hall D'), nl, nl.
 		
 describe(fuel_tank) :-
-        write('You are inside the fuel tank room. To the north is Hall D.'), nl.
+        write('You are inside the fuel tank room. To the north is Hall D.'), nl, nl.
 		
 describe(engine_A) :-
 		locked(Lc),
 		isMember(engine_A,Lc),
 		write('It''s the engine room, the door is locked '), nl,
 		write('You hear rumble from the room'), nl,
-		write('it feels like something is about to explode inside'), nl,
+		write('it feels like something is about to explode inside'), nl, nl,
 		!.
 
 describe(engine_A) :-
         write('You are in engine room A. To the north is the engine room B.'), nl,
-	write('To the west is Hall D.'), nl.
+	write('To the west is Hall D.'), nl, nl.
 		
 describe(engine_B) :-
-        write('You are in engine room B. To the south is the engine room A.'), nl.
+        write('You are in engine room B. To the south is the engine room A.'), nl, nl.
 		
 describe(freezer) :-
 		locked(Lc),
 		isMember(freezer,Lc),
 		write('It''s the freezer room, the door is locked '), nl,
 		write('You hear rumble from the room'), nl,
-		write('it feels like something is about to explode inside'), nl,
+		write('it feels like something is about to explode inside'), nl, nl,
 		!.
 		
 describe(freezer) :-
         write('You are inside the freezer. To the north is the cooling system room.'), nl,
-	write('To the east is Hall D.'), nl.
+	write('To the east is Hall D.'), nl, nl.
 		
 describe(cooling_system) :-
-        write('You are in cooling system room. To the south is the freezer.'), nl.
+        write('You are in cooling system room. To the south is the freezer.'), nl, nl.
 
 
 /* AI for the alien */
