@@ -503,7 +503,7 @@ take(X) :-
         nl, nl.
 
 take(_) :-
-        write('I don''t see it here.'),
+        write('invalid target '),
         nl,nl.
 
 
@@ -536,16 +536,16 @@ use(_) :- attacked,
 	!.
 
 use(oxygen) :-
+	at(L),
+	isMember([oxygen, in_hand], L),
 	ruby(2),
 	write('You can use oxygen on ruby'),nl,
 	write('do want to use it on her (y/n)'),nl,
 	get_single_char(_),
 	get_single_char(X),
-	\+(X = 121),
+	(X = 121),
 	retract(ruby(2)),
 	assertz(ruby(3)),
-	at(L),
-	isMember([oxygen, in_hand], L),
 	rember(L, [oxygen, in_hand], Y),
 	retract(at(L)),
 	assertz(at(Y)),
@@ -784,21 +784,34 @@ update_scene :-
 	assertz(locked(M)), fail. /*don't put them ! here*/
 	
 update_scene :-
+	at(Inventory),
+	\+isMember([communicator,in_hand],Inventory),
 	ruby(1),
 	scene(4),
 	position(Location),
 	isMember([player, hall_A],Location),
 	retract(ruby(1)),
 	assertz(ruby(0)),
-	write('Signal id ''ruby'' has stopped blinking'), nl,nl,
+	fail.
+	
+update_scene :-
+	at(Inventory),
+	isMember([communicator,in_hand],Inventory),
+	ruby(1),
+	scene(4),
+	position(Location),
+	isMember([player, hall_A],Location),
+	retract(ruby(1)),
+	assertz(ruby(0)),
+	write('signal with id ''ruby'' stopped blinking'),nl,nl,
 	fail.
 	
 	
 update_scene :-
 	scene(1),
 	turn(Z),
-	scene1max(X),
-	Z > X,
+	scene1max(W),
+	Z > W,
 	broken(X),
 	isMember([fuel_tank,antimatter],X),
 	retract(scene(1)),
@@ -1047,6 +1060,8 @@ talk(alien) :-
 	write('HOOOMAAAANNNNN!!!'), nl, nl, !.
 	
 talk(ruby) :-
+	ruby(X),
+	\+isMember(X,[2,3]),
 	at(K),
 	\+isMember([communicator, in_hand], K),
 	write('You don''t have your communicator'), nl, nl, 
