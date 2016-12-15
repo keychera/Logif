@@ -1669,7 +1669,6 @@ start :-
 	init_new,
 	check_script,
 	write('press Enter to start the game'), nl, get_single_char(_),
-	write('\33\[2J'),
 	stat,
 	check_script,
 	write('It''s so dark here, you don''t really know where you are'),nl,nl,
@@ -1682,7 +1681,6 @@ loop :-
 	write('> Input command : '),
 	nl,
 	read(X),
-	write('\33\[2J'),
 	run(X),
 	X = secret.
 /* This rules is used for debugging */
